@@ -1,0 +1,2113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>B.L Verdantix - AI-Powered Plant Care & Agriculture</title>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=Sora:wght@300;400;600;700;800&family=Manrope:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.css"/>
+
+  <style>
+    /* =========================================================
+       ROOT & RESET
+    ========================================================= */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+
+    :root {
+      --primary: #1b5e20;
+      --primary-light: #2e7d32;
+      --primary-dark: #0d3310;
+      --accent: #f9a825;
+      --accent-light: #ffc947;
+      --bg-cream: #faf8f3;
+      --bg-white: #ffffff;
+      --text-dark: #1a1a1a;
+      --text-medium: #4a5f3a;
+      --text-light: #7a8c6a;
+      --shadow-sm: 0 2px 8px rgba(27,94,32,0.08);
+      --shadow-md: 0 8px 24px rgba(27,94,32,0.12);
+      --shadow-lg: 0 16px 48px rgba(27,94,32,0.16);
+      --cyan: #00d4ff;
+      --teal: #00f5c3;
+      --pink: #ff4d8d;
+
+      /* Footer specific */
+      --footer-bg: #070d05;
+      --footer-surface: #0e1a0c;
+      --footer-border: rgba(249,168,37,0.12);
+      --footer-text: rgba(255,255,255,0.65);
+      --footer-heading: #f9a825;
+      --footer-link-hover: #ffc947;
+    }
+
+    body {
+      font-family: 'Sora', sans-serif;
+      color: var(--text-dark);
+      background: var(--bg-cream);
+      overflow-x: hidden;
+    }
+
+    /* =========================================================
+       PAGE SYSTEM
+    ========================================================= */
+    .page { display: none; }
+    .page.active { display: block; }
+
+    /* =========================================================
+       GLOBAL ANIMATIONS
+    ========================================================= */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(40px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeInLeft {
+      from { opacity: 0; transform: translateX(-30px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes fadeInRight {
+      from { opacity: 0; transform: translateX(30px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse {
+      from { transform: scale(1); opacity: .7; }
+      to   { transform: scale(1.15); opacity: 1; }
+    }
+    @keyframes slideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes autoSlide {
+      0%   { transform: translateX(0); }
+      100% { transform: translateX(-60%); }
+    }
+    @keyframes popIn {
+      0%  { transform: scale(0) rotate(-30deg); opacity: 0; }
+      70% { transform: scale(1.1) rotate(5deg); }
+      100%{ transform: scale(1) rotate(0); opacity: 1; }
+    }
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(-16px); }
+      to   { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes rise {
+      from { opacity: 0; transform: translateY(50px) scale(.97); }
+      to   { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    @keyframes pulseGlow {
+      0%, 100% { box-shadow: 0 8px 24px rgba(66,133,244,.4); }
+      50% { box-shadow: 0 8px 32px rgba(66,133,244,.7); }
+    }
+    @keyframes typing {
+      0%, 60%, 100% { transform: translateY(0); }
+      30% { transform: translateY(-10px); }
+    }
+    @keyframes footerShimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes seedGrow {
+      0% { transform: scaleY(0); opacity:0; }
+      100% { transform: scaleY(1); opacity:1; }
+    }
+
+    /* =========================================================
+       STICKY HEADER / NAV
+    ========================================================= */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 6%;
+      background: rgba(255,255,255,.97);
+      backdrop-filter: blur(20px);
+      box-shadow: var(--shadow-sm);
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      transition: all .3s;
+    }
+    header.scrolled { padding: 14px 6%; box-shadow: var(--shadow-md); }
+
+    .logo { display: flex; align-items: center; gap: 14px; cursor: pointer; transition: transform .3s; }
+    .logo:hover { transform: translateY(-2px); }
+    .logo img { width: 52px; height: 52px; border-radius: 12px; box-shadow: var(--shadow-sm); }
+    .logo-text h2 { color: var(--primary); font-size: 1.45rem; font-weight: 800; font-family: 'Playfair Display', serif; }
+    .logo-text p  { color: var(--text-light); font-size: .68rem; font-weight: 500; text-transform: uppercase; letter-spacing: 1.5px; }
+
+    nav { display: flex; gap: 32px; align-items: center; }
+    nav a {
+      text-decoration: none; color: var(--text-dark); font-weight: 600; font-size: .93rem;
+      position: relative; transition: color .3s; cursor: pointer;
+    }
+    nav a::after {
+      content: ''; position: absolute; bottom: -6px; left: 0;
+      width: 0; height: 2px; background: var(--accent); transition: width .3s;
+    }
+    nav a:hover { color: var(--primary); }
+    nav a:hover::after { width: 100%; }
+
+    .profile-btn {
+      width: 44px; height: 44px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      display: flex; align-items: center; justify-content: center;
+      cursor: pointer; transition: all .3s; box-shadow: var(--shadow-sm);
+      border: 3px solid var(--bg-white); text-decoration: none;
+    }
+    .profile-btn:hover { transform: scale(1.1) rotate(5deg); box-shadow: var(--shadow-md); }
+    .profile-btn i { color: white; font-size: 1.1rem; }
+
+    .hamburger { display: none; flex-direction: column; cursor: pointer; gap: 5px; z-index: 1001; }
+    .hamburger span { width: 27px; height: 3px; background: var(--primary); border-radius: 3px; transition: all .3s; }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(8px,8px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(8px,-8px); }
+
+    .overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.6); z-index: 998; backdrop-filter: blur(4px); }
+    .overlay.active { display: block; }
+
+    @media (max-width: 968px) {
+      nav {
+        position: fixed; top: 0; right: -100%; width: 300px; height: 100vh;
+        background: var(--bg-white); flex-direction: column; padding: 100px 30px 30px;
+        gap: 28px; box-shadow: -5px 0 25px rgba(0,0,0,.1); transition: right .4s cubic-bezier(.68,-.55,.265,1.55);
+        align-items: flex-start;
+      }
+      nav.active { right: 0; }
+      nav a { font-size: 1.1rem; padding: 10px 0; }
+      .hamburger { display: flex; }
+      .profile-btn { margin-right: 60px; }
+    }
+
+    /* =========================================================
+       HOME PAGE
+    ========================================================= */
+    .hero {
+      position: relative; height: 92vh;
+      display: flex; align-items: center; padding: 0 6%; overflow: hidden;
+    }
+    .hero-bg {
+      position: absolute; inset: 0;
+      background: url("https://img.sanishtech.com/u/8cf7d401b046070f3e0b1663afe8e3ec.png") center/cover no-repeat;
+    }
+    .hero-bg::after {
+      content: ''; position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(13,51,16,.85), rgba(27,94,32,.75));
+    }
+    .hero-content { position: relative; z-index: 2; max-width: 800px; animation: fadeInUp 1s ease-out; }
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,.15); backdrop-filter: blur(10px);
+      padding: 12px 24px; border-radius: 50px; color: white;
+      font-size: .85rem; font-weight: 600; margin-bottom: 30px;
+      border: 1px solid rgba(255,255,255,.2); animation: fadeInUp 1s ease-out .2s both;
+    }
+    .hero-badge i { color: var(--accent); }
+    .hero h1 {
+      font-family: 'Playfair Display', serif; font-size: 4.5rem; font-weight: 900;
+      color: white; line-height: 1.1; margin-bottom: 25px; letter-spacing: -2px;
+      animation: fadeInUp 1s ease-out .4s both;
+    }
+    .hero p {
+      font-size: 1.22rem; line-height: 1.7; color: rgba(255,255,255,.9);
+      margin-bottom: 40px; animation: fadeInUp 1s ease-out .6s both;
+    }
+    .hero-buttons { display: flex; gap: 20px; flex-wrap: wrap; animation: fadeInUp 1s ease-out .8s both; }
+
+    .btn {
+      padding: 16px 36px; border-radius: 50px; font-weight: 700; font-size: 1rem;
+      cursor: pointer; transition: all .3s; text-decoration: none;
+      display: inline-flex; align-items: center; gap: 10px; letter-spacing: .5px; border: none;
+    }
+    .btn-primary {
+      background: var(--accent); color: var(--text-dark);
+      box-shadow: 0 8px 24px rgba(249,168,37,.4);
+    }
+    .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 12px 32px rgba(249,168,37,.5); background: var(--accent-light); }
+    .btn-secondary {
+      background: rgba(255,255,255,.15); backdrop-filter: blur(10px);
+      color: white; border: 2px solid rgba(255,255,255,.3);
+    }
+    .btn-secondary:hover { background: rgba(255,255,255,.25); border-color: rgba(255,255,255,.5); transform: translateY(-3px); }
+
+    .features-section { padding: 100px 6%; background: var(--bg-white); }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 35px; max-width: 1200px; margin: 0 auto; }
+    .feature-card {
+      text-align: center; padding: 40px 30px; background: var(--bg-cream); border-radius: 24px;
+      transition: all .3s; border: 2px solid transparent;
+    }
+    .feature-card:hover { transform: translateY(-8px); box-shadow: var(--shadow-lg); border-color: var(--primary-light); }
+    .feature-icon {
+      width: 80px; height: 80px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 25px; font-size: 2.2rem; color: white;
+    }
+    .feature-card h3 { font-size: 1.4rem; color: var(--primary-dark); margin-bottom: 15px; font-weight: 700; }
+    .feature-card p  { font-size: 1rem; color: var(--text-medium); line-height: 1.7; }
+
+    .ai-section { padding: 100px 6%; background: linear-gradient(135deg, #f0f8f0, #e8f5e0); }
+    .ai-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .ai-content h2 { font-family: 'Playfair Display', serif; font-size: 3.5rem; color: var(--primary-dark); margin-bottom: 25px; font-weight: 900; line-height: 1.2; }
+    .ai-content p  { font-size: 1.15rem; color: var(--text-medium); line-height: 1.8; margin-bottom: 20px; }
+    .ai-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-top: 40px; }
+    .stat-item { background: white; padding: 25px; border-radius: 16px; box-shadow: var(--shadow-sm); }
+    .stat-number { font-size: 2.5rem; font-weight: 900; color: var(--primary); margin-bottom: 8px; font-family: 'Playfair Display', serif; }
+    .stat-label { font-size: .95rem; color: var(--text-medium); font-weight: 600; }
+    .ai-image { border-radius: 24px; overflow: hidden; box-shadow: var(--shadow-lg); }
+    .ai-image img { width: 100%; height: 500px; object-fit: cover; }
+
+    .section { padding: 120px 6%; position: relative; }
+    .section-header { max-width: 900px; margin: 0 auto 80px; text-align: center; }
+    .section-badge {
+      display: inline-block; padding: 8px 20px; background: rgba(27,94,32,.1);
+      color: var(--primary); border-radius: 50px; font-size: .85rem; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 20px;
+    }
+    .section h2 { font-family: 'Playfair Display', serif; font-size: 3.5rem; color: var(--primary-dark); margin-bottom: 25px; font-weight: 900; line-height: 1.2; letter-spacing: -1px; }
+    .section p  { font-size: 1.15rem; line-height: 1.8; color: var(--text-medium); }
+
+    .solutions-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px,1fr)); gap: 40px; margin-top: 60px; }
+    .solution-card {
+      background: var(--bg-white); border-radius: 24px; overflow: hidden;
+      box-shadow: var(--shadow-md); transition: all .4s cubic-bezier(.175,.885,.32,1.275); position: relative;
+    }
+    .solution-card::before {
+      content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 5px;
+      background: linear-gradient(90deg, var(--primary), var(--accent)); transform: scaleX(0); transition: transform .4s;
+    }
+    .solution-card:hover::before { transform: scaleX(1); }
+    .solution-card:hover { transform: translateY(-12px); box-shadow: var(--shadow-lg); }
+    .solution-card img { width: 100%; height: 280px; object-fit: cover; transition: transform .4s; }
+    .solution-card:hover img { transform: scale(1.08); }
+    .solution-content { padding: 35px; }
+    .solution-content h3 { font-size: 1.6rem; color: var(--primary-dark); margin-bottom: 15px; font-weight: 700; }
+    .solution-content p  { font-size: 1rem; color: var(--text-medium); line-height: 1.6; }
+
+    .how-it-works { padding: 100px 6%; background: var(--bg-white); }
+    .steps-container { max-width: 1200px; margin: 60px auto 0; display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 40px; }
+    .step-card { text-align: center; }
+    .step-number {
+      width: 60px; height: 60px; background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      margin: 0 auto 20px; font-size: 1.8rem; font-weight: 900; color: white;
+      box-shadow: 0 8px 20px rgba(249,168,37,.3);
+    }
+    .step-card h3 { font-size: 1.3rem; color: var(--primary-dark); margin-bottom: 12px; font-weight: 700; }
+    .step-card p  { font-size: 1rem; color: var(--text-medium); line-height: 1.7; }
+
+    .app-section { padding: 100px 6%; background: linear-gradient(135deg, var(--primary-dark), var(--primary)); color: white; }
+    .app-container { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 60px; align-items: center; }
+    .app-content h2 { font-family: 'Playfair Display', serif; font-size: 3.5rem; margin-bottom: 25px; font-weight: 900; }
+    .app-content p  { font-size: 1.15rem; line-height: 1.8; margin-bottom: 30px; opacity: .95; }
+    .app-features { list-style: none; margin-bottom: 30px; }
+    .app-features li { padding: 12px 0 12px 35px; position: relative; font-size: 1.05rem; }
+    .app-features li::before { content: '✓'; position: absolute; left: 0; color: var(--accent); font-weight: 900; font-size: 1.3rem; }
+    .app-buttons { display: flex; gap: 15px; flex-wrap: wrap; }
+    .app-btn {
+      padding: 14px 28px; background: white; color: var(--primary); border-radius: 12px;
+      text-decoration: none; font-weight: 700; display: inline-flex; align-items: center; gap: 10px; transition: all .3s;
+    }
+    .app-btn:hover { transform: translateY(-3px); box-shadow: 0 8px 20px rgba(255,255,255,.3); }
+    .app-mockup img { max-width: 100%; filter: drop-shadow(0 20px 40px rgba(0,0,0,.3)); }
+
+    .recognition-section {
+      background: linear-gradient(135deg, var(--primary-dark), var(--primary));
+      padding: 100px 6%; position: relative; overflow: hidden;
+    }
+    .recognition-section::before {
+      content: ''; position: absolute; top: -50%; right: -10%;
+      width: 600px; height: 600px; background: radial-gradient(circle, rgba(249,168,37,.15), transparent 70%);
+      border-radius: 50%;
+    }
+    .recognition-section h2 { color: white; }
+    .recognition-section .section-badge { background: rgba(255,255,255,.15); color: var(--accent); }
+    .slider-container { width: 100%; overflow: hidden; position: relative; z-index: 2; }
+    .slider-track { display: flex; gap: 30px; animation: autoSlide 30s linear infinite; }
+    .slider-track:hover { animation-play-state: paused; }
+    .slider-card { min-width: 300px; background: white; border-radius: 20px; overflow: hidden; box-shadow: 0 12px 40px rgba(0,0,0,.2); transition: transform .3s; }
+    .slider-card:hover { transform: translateY(-8px); }
+    .slider-card img { width: 100%; height: 250px; object-fit: cover; }
+    .slider-content { padding: 25px; }
+    .slider-content p { margin: 8px 0; font-size: .95rem; color: var(--text-medium); }
+    .slider-content strong { color: var(--primary); font-size: 1.1rem; }
+
+    .map-section { background: var(--bg-white); padding: 100px 6%; }
+    .map-container { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; max-width: 1400px; margin: 0 auto; }
+    .map-image img { width: 100%; filter: drop-shadow(0 20px 40px rgba(27,94,32,.15)); animation: float 6s ease-in-out infinite; }
+    .map-content h2 { font-family: 'Playfair Display', serif; font-size: 3rem; color: var(--primary-dark); margin-bottom: 40px; font-weight: 900; }
+    .map-content ul { list-style: none; }
+    .map-content li { font-size: 1.3rem; font-weight: 700; color: var(--accent); margin-bottom: 20px; padding-left: 40px; position: relative; }
+    .map-content li::before { content: '📍'; position: absolute; left: 0; font-size: 1.5rem; }
+
+    /* =========================================================
+       ABOUT PAGE
+    ========================================================= */
+    .about-hero {
+      padding: 100px 40px 80px;
+      background: linear-gradient(135deg, #f0f9f4, #e8f5e9); text-align: center;
+      animation: fadeInUp .8s ease-out;
+    }
+    .about-hero h1 { font-size: 56px; font-weight: 800; color: #1b5e20; margin-bottom: 20px; line-height: 1.2; font-family: 'Playfair Display', serif; }
+    .about-hero p { font-size: 20px; color: #555; max-width: 700px; margin: 0 auto; line-height: 1.6; }
+
+    .mission-section { padding: 100px 40px; max-width: 1200px; margin: 0 auto; }
+    .mission-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 80px; align-items: center; }
+    .mission-text h2 { font-size: 42px; font-weight: 700; color: #1b5e20; margin-bottom: 30px; line-height: 1.3; font-family: 'Playfair Display', serif; }
+    .mission-text p { font-size: 18px; line-height: 1.8; color: #555; margin-bottom: 20px; }
+    .mission-image { border-radius: 20px; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.1); }
+    .mission-image img { width: 100%; height: 500px; object-fit: cover; transition: transform .5s; }
+    .mission-image:hover img { transform: scale(1.05); }
+
+    .values-section { padding: 100px 40px; background: #f9fafb; }
+    .values-container { max-width: 1200px; margin: 0 auto; text-align: center; }
+    .values-container h2 { font-size: 42px; font-weight: 700; color: #1b5e20; margin-bottom: 20px; font-family: 'Playfair Display', serif; }
+    .values-subtitle { font-size: 18px; color: #666; margin-bottom: 60px; }
+    .values-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(280px,1fr)); gap: 40px; margin-top: 40px; }
+    .value-card { background: white; padding: 40px 30px; border-radius: 16px; box-shadow: 0 4px 20px rgba(0,0,0,.06); transition: all .3s; text-align: center; }
+    .value-card:hover { transform: translateY(-10px); box-shadow: 0 12px 40px rgba(46,125,50,.15); }
+    .value-icon { width: 70px; height: 70px; background: linear-gradient(135deg,#66bb6a,#2e7d32); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 32px; color: white; }
+    .value-card h3 { font-size: 22px; font-weight: 600; color: #1b5e20; margin-bottom: 15px; }
+    .value-card p  { font-size: 15px; line-height: 1.7; color: #666; }
+
+    .journey-section { padding: 100px 40px; background: white; }
+    .journey-container { max-width: 1200px; margin: 0 auto; text-align: center; }
+    .journey-container h2 { font-size: 42px; font-weight: 700; color: #1b5e20; margin-bottom: 60px; font-family: 'Playfair Display', serif; }
+    .timeline { position: relative; max-width: 800px; margin: 0 auto; }
+    .timeline::before { content: ''; position: absolute; left: 50%; transform: translateX(-50%); width: 3px; height: 100%; background: linear-gradient(180deg,#66bb6a,#2e7d32); }
+    .timeline-item { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; margin-bottom: 60px; position: relative; }
+    .timeline-item:nth-child(even) .timeline-content { grid-column: 2; }
+    .timeline-item:nth-child(even) .timeline-year { grid-column: 1; text-align: right; }
+    .timeline-year { font-size: 32px; font-weight: 700; color: #2e7d32; }
+    .timeline-content { background: #f9fafb; padding: 30px; border-radius: 12px; text-align: left; }
+    .timeline-content h3 { font-size: 20px; font-weight: 600; color: #1b5e20; margin-bottom: 10px; }
+    .timeline-content p  { font-size: 15px; color: #666; line-height: 1.6; }
+    .timeline-dot { position: absolute; left: 50%; transform: translateX(-50%); width: 20px; height: 20px; background: #2e7d32; border: 4px solid white; border-radius: 50%; box-shadow: 0 0 0 4px rgba(46,125,50,.2); }
+
+    .leadership { background: linear-gradient(135deg,#cdc3be,#eaf5de); padding: 100px 20px; text-align: center; }
+    .leadership h2 { font-size: 42px; margin-bottom: 15px; color: #2e7d32; font-weight: 700; font-family: 'Playfair Display', serif; }
+    .leadership-intro { font-size: 18px; color: #000; margin-bottom: 50px; max-width: 700px; margin-left: auto; margin-right: auto; }
+    .leaders { display: flex; justify-content: center; gap: 40px; flex-wrap: wrap; max-width: 1200px; margin: auto; }
+    .leader-card { width: 240px; text-align: center; transition: .4s; cursor: pointer; }
+    .leader-card:hover { transform: translateY(-10px); }
+    .leader-img { width: 220px; height: 260px; border-radius: 15px; background-size: cover; background-position: center; box-shadow: 0 8px 20px rgba(0,0,0,.15); margin-bottom: 15px; transition: .4s; }
+    .leader-card:hover .leader-img { box-shadow: 0 12px 30px rgba(46,125,50,.3); }
+    .leader-name { font-size: 20px; font-weight: 600; color: #2e7d32; margin-bottom: 5px; }
+    .leader-title { font-size: 14px; color: #666; }
+
+    .team { padding: 100px 20px; text-align: center; background: #fff; }
+    .team h2 { font-size: 42px; margin-bottom: 15px; color: #2e7d32; font-weight: 700; font-family: 'Playfair Display', serif; }
+    .team-intro { font-size: 18px; color: #555; margin-bottom: 50px; max-width: 700px; margin-left: auto; margin-right: auto; }
+    .team-grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 40px; max-width: 1100px; margin: auto; }
+    .team-member { text-align: center; transition: .4s; }
+    .team-member:hover { transform: translateY(-10px); }
+    .team-cube { width: 200px; height: 200px; border-radius: 20px; background-size: cover; background-position: center; box-shadow: 0 12px 25px rgba(0,0,0,.18); transition: .4s; margin: 0 auto 15px; }
+    .team-member:hover .team-cube { transform: rotateY(15deg) rotateX(10deg) scale(1.05); box-shadow: 0 15px 35px rgba(46,125,50,.3); }
+    .team-name { font-size: 18px; font-weight: 600; color: #2e7d32; margin-bottom: 5px; }
+    .team-role { font-size: 14px; color: #666; }
+
+    /* =========================================================
+       CONTACT PAGE
+    ========================================================= */
+    .contact-bg {
+      background: linear-gradient(135deg, #0f4c3a, #1a7f5a 50%, #2d6a4f);
+      min-height: 100vh; padding: 40px 0;
+    }
+    .contact-header { text-align: center; color: white; padding: 40px 20px 20px; animation: fadeInUp .8s ease-out; }
+    .contact-header h1 { font-size: 42px; margin-bottom: 10px; font-weight: 700; text-shadow: 2px 2px 4px rgba(0,0,0,.3); }
+    .contact-header .tagline { font-size: 18px; opacity: .95; }
+    .contact-main { max-width: 1200px; margin: 40px auto; padding: 0 20px; display: grid; grid-template-columns: 1fr 1fr; gap: 40px; }
+    .info-section { background: rgba(255,255,255,.95); border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,.3); animation: fadeInLeft .8s ease-out; }
+    .form-section { background: white; border-radius: 20px; padding: 40px; box-shadow: 0 20px 60px rgba(0,0,0,.3); animation: fadeInRight .8s ease-out; }
+    .section-title { color: #0f4c3a; font-size: 28px; margin-bottom: 25px; font-weight: 700; border-bottom: 3px solid #52b788; padding-bottom: 10px; }
+    .contact-item { display: flex; align-items: flex-start; margin-bottom: 25px; padding: 15px; background: #f1faee; border-radius: 10px; transition: transform .3s, box-shadow .3s; }
+    .contact-item:hover { transform: translateX(5px); box-shadow: 0 5px 15px rgba(82,183,136,.3); }
+    .contact-icon { font-size: 24px; margin-right: 15px; color: #2d6a4f; min-width: 30px; }
+    .contact-details h3 { color: #0f4c3a; font-size: 16px; margin-bottom: 5px; font-weight: 600; }
+    .contact-details p, .contact-details a { color: #555; font-size: 15px; line-height: 1.6; text-decoration: none; }
+    .contact-details a:hover { color: #52b788; }
+    .form-group { margin-bottom: 25px; }
+    .form-group label { display: block; color: #0f4c3a; font-weight: 600; margin-bottom: 8px; font-size: 15px; }
+    .form-group input, .form-group textarea {
+      width: 100%; padding: 14px 16px; border: 2px solid #d8f3dc; border-radius: 10px;
+      font-size: 15px; transition: all .3s; font-family: inherit; background: #f1faee;
+    }
+    .form-group input:focus, .form-group textarea:focus {
+      outline: none; border-color: #52b788; background: white; box-shadow: 0 0 0 4px rgba(82,183,136,.1);
+    }
+    .form-group textarea { resize: vertical; min-height: 140px; }
+    .contact-submit {
+      width: 100%; padding: 16px; background: linear-gradient(135deg,#2d6a4f,#52b788);
+      color: white; border: none; border-radius: 10px; font-size: 17px; font-weight: 700;
+      cursor: pointer; transition: all .3s; text-transform: uppercase; letter-spacing: 1px;
+      box-shadow: 0 5px 15px rgba(45,106,79,.3);
+    }
+    .contact-submit:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(45,106,79,.4); }
+    .success-message, .error-message { display: none; padding: 16px; border-radius: 10px; margin-bottom: 20px; text-align: center; font-weight: 600; }
+    .success-message { background: #d4edda; color: #155724; border-left: 4px solid #28a745; }
+    .error-message   { background: #f8d7da; color: #721c24; border-left: 4px solid #dc3545; }
+    .success-message.show, .error-message.show { display: block; animation: slideIn .5s ease-out; }
+    .info-box { background: linear-gradient(135deg,#e8f5e9,#c8e6c9); padding: 20px; border-radius: 12px; margin-top: 30px; border-left: 5px solid #2d6a4f; }
+    .info-box h3 { color: #0f4c3a; font-size: 18px; margin-bottom: 12px; font-weight: 700; }
+    .info-box p { color: #333; font-size: 14px; margin-bottom: 8px; line-height: 1.6; }
+    .required { color: #e74c3c; }
+
+    /* =========================================================
+       SERVICES PAGE
+    ========================================================= */
+    .services-bg { background: #e8f5e9; min-height: 100vh; }
+    .services-header {
+      background: linear-gradient(135deg, #0f4c3a, #1a7f5a 60%, #2d8f5f);
+      position: relative; overflow: hidden;
+    }
+    .services-header::before { content: ''; position: absolute; top: -60px; right: -60px; width: 260px; height: 260px; border-radius: 50%; background: rgba(255,255,255,.06); }
+    .header-inner { max-width: 1300px; margin: 0 auto; padding: 28px 24px; display: flex; align-items: center; justify-content: space-between; position: relative; z-index: 1; }
+    .logo-brand { display: flex; align-items: center; gap: 14px; }
+    .brand-text .company-tag { font-family: 'Playfair Display', serif; font-size: 22px; font-weight: 800; color: #fff; letter-spacing: 2px; }
+    .brand-text .company-tag span { color: #f0c040; }
+    .brand-text .company-sub { font-size: 11px; color: rgba(255,255,255,.65); letter-spacing: 3px; text-transform: uppercase; }
+    .header-center { text-align: center; flex: 1; padding: 0 20px; }
+    .services-badge { display: inline-block; background: rgba(255,255,255,.12); border: 1px solid rgba(255,255,255,.22); border-radius: 30px; padding: 5px 22px; font-size: 11px; color: #f0c040; letter-spacing: 3px; text-transform: uppercase; font-weight: 600; margin-bottom: 10px; }
+    .header-center h1 { font-family: 'Playfair Display', serif; font-size: 34px; font-weight: 700; color: #fff; }
+    .header-center h1 span { color: #f0c040; }
+    .header-center p { color: rgba(255,255,255,.7); font-size: 13px; margin-top: 4px; }
+
+    .service-nav { max-width: 1300px; margin: -22px auto 0; padding: 0 24px; position: relative; z-index: 10; display: flex; gap: 14px; justify-content: center; }
+    .service-tab { background: #fff; border: none; border-radius: 14px 14px 0 0; padding: 14px 32px; font-family: 'Sora',sans-serif; font-size: 15px; font-weight: 600; color: #3d5a3d; cursor: pointer; box-shadow: 0 -2px 12px rgba(15,76,58,.10); transition: all .3s; display: flex; align-items: center; gap: 9px; position: relative; }
+    .service-tab:hover, .service-tab.active { color: #0f4c3a; }
+    .service-tab.active::after { content: ''; position: absolute; bottom: -3px; left: 0; right: 0; height: 3px; background: #52b788; border-radius: 3px 3px 0 0; }
+    .service-panel { display: none; max-width: 1300px; margin: 0 auto; padding: 0 24px 30px; background: #fff; border-radius: 0 18px 18px 18px; box-shadow: 0 8px 32px rgba(15,76,58,.18); min-height: 200px; }
+    .service-panel.active { display: block; }
+
+    .gps-layout { display: grid; grid-template-columns: 340px 1fr; gap: 0; }
+    .gps-sidebar { padding: 28px 24px; border-right: 1px solid #d8f3dc; background: #f1faee; border-radius: 0 0 0 18px; }
+    .gps-map-wrap { height: 680px; border-radius: 0 18px 18px 0; overflow: hidden; }
+    #map { width: 100%; height: 100%; }
+    .sidebar-instructions { background: #fff; border: 1px solid #d8f3dc; border-radius: 10px; padding: 14px 16px; margin-bottom: 18px; }
+    .sidebar-instructions h4 { color: #0f4c3a; font-size: 13px; margin-bottom: 8px; display: flex; align-items: center; gap: 6px; }
+    .sidebar-instructions ol { margin-left: 18px; font-size: 12px; color: #3d5a3d; line-height: 1.8; }
+    .gps-input-row { margin-bottom: 12px; }
+    .gps-input-row label { display: block; font-size: 12px; font-weight: 600; color: #0f4c3a; margin-bottom: 5px; }
+    .gps-input-row input { width: 100%; padding: 10px 12px; border: 2px solid #d8f3dc; border-radius: 8px; font-size: 13px; transition: border-color .25s; }
+    .gps-input-row input:focus { outline: none; border-color: #52b788; }
+    .gps-btn-row { display: flex; flex-direction: column; gap: 8px; }
+    .gps-btn { width: 100%; padding: 11px 14px; border: none; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: transform .2s, box-shadow .2s; display: flex; align-items: center; justify-content: center; gap: 7px; }
+    .gps-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(0,0,0,.15); }
+    .gps-btn.primary { background: linear-gradient(135deg,#0f4c3a,#1a7f5a); color: #fff; }
+    .gps-btn.success { background: #52b788; color: #fff; }
+    .gps-btn.warning { background: #f0a030; color: #fff; }
+    .gps-btn.danger  { background: #e05555; color: #fff; }
+    .loading-text { display: none; text-align: center; color: #1a7f5a; font-size: 13px; padding: 6px 0; }
+    .loading-text.show { display: block; }
+    .gps-result-card { display: none; background: linear-gradient(135deg,#0f4c3a,#1a7f5a); border-radius: 12px; padding: 18px; color: #fff; margin-top: 16px; }
+    .gps-result-card.show { display: block; }
+    .r-row { display: flex; justify-content: space-between; align-items: baseline; padding: 7px 0; border-bottom: 1px solid rgba(255,255,255,.18); }
+    .r-row:last-child { border-bottom: none; }
+    .r-label { font-size: 11px; opacity: .8; }
+    .r-val { font-size: 17px; font-weight: 700; }
+    .polygon-hint { display: none; background: #fff3cd; border: 1px solid #ffe08a; border-radius: 8px; padding: 10px 12px; font-size: 12px; color: #7a5a00; margin-top: 10px; }
+    .polygon-hint.show { display: block; }
+
+    .agri-inner-tabs { display: flex; border-bottom: 2px solid #d8f3dc; background: #f1faee; border-radius: 18px 18px 0 0; overflow: hidden; flex-wrap: wrap; }
+    .agri-tab-btn { flex: 1; min-width: 120px; padding: 15px 10px; border: none; background: transparent; font-size: 13px; font-weight: 600; color: #3d5a3d; cursor: pointer; transition: all .25s; border-bottom: 3px solid transparent; }
+    .agri-tab-btn:hover { background: rgba(82,183,136,.08); }
+    .agri-tab-btn.active { background: #fff; color: #0f4c3a; border-bottom-color: #52b788; }
+    .agri-tab-content { display: none; padding: 32px 36px 28px; }
+    .agri-tab-content.active { display: block; }
+    .calc-title { font-family: 'Playfair Display', serif; font-size: 24px; color: #0f4c3a; margin-bottom: 22px; padding-bottom: 10px; border-bottom: 2px solid #d8f3dc; }
+    .form-row { display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr)); gap: 18px; margin-bottom: 18px; }
+    .agri-form-group { margin-bottom: 4px; }
+    .agri-form-group label { display: block; font-size: 13px; font-weight: 600; color: #0f4c3a; margin-bottom: 6px; }
+    .agri-form-group select, .agri-form-group input { width: 100%; padding: 11px 14px; border: 2px solid #d8f3dc; border-radius: 8px; font-size: 14px; background: #f1faee; transition: all .25s; }
+    .agri-form-group select:focus, .agri-form-group input:focus { outline: none; border-color: #52b788; background: #fff; box-shadow: 0 0 0 3px rgba(82,183,136,.12); }
+    .btn-calc { padding: 13px 36px; background: linear-gradient(135deg,#0f4c3a,#52b788); color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: 700; cursor: pointer; transition: transform .2s, box-shadow .2s; box-shadow: 0 4px 14px rgba(15,76,58,.25); }
+    .btn-calc:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(15,76,58,.35); }
+    .result-box { display: none; background: linear-gradient(135deg,#e8f5e9,#c8e6c9); border-left: 5px solid #0f4c3a; border-radius: 10px; padding: 24px 22px; margin-top: 24px; animation: slideIn .4s ease-out; }
+    .result-box.show { display: block; }
+    .result-box h3 { color: #0f4c3a; font-size: 18px; margin-bottom: 16px; }
+    .result-item { background: #fff; padding: 11px 16px; margin-bottom: 9px; border-radius: 7px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 5px rgba(0,0,0,.07); }
+    .result-label { color: #555; font-weight: 600; font-size: 13px; }
+    .result-value { color: #0f4c3a; font-weight: 700; font-size: 14px; }
+    .total-cost { background: #0f4c3a; color: #fff; padding: 16px; border-radius: 9px; margin-top: 12px; text-align: center; font-size: 18px; font-weight: 700; }
+    .info-note { background: #fff3cd; border-left: 4px solid #ffc107; padding: 12px 14px; margin-top: 16px; border-radius: 5px; color: #7a5a00; font-size: 13px; }
+    .tree-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(100px,1fr)); gap: 10px; margin-bottom: 18px; max-height: 280px; overflow-y: auto; }
+    .tree-card { background: #f1faee; border: 2px solid #d8f3dc; border-radius: 10px; padding: 12px 6px; text-align: center; cursor: pointer; transition: all .22s; }
+    .tree-card:hover { border-color: #52b788; transform: translateY(-2px); }
+    .tree-card.selected { background: #52b788; color: #fff; border-color: #0f4c3a; }
+    .tree-card .t-icon { font-size: 28px; }
+    .tree-card .t-name { font-size: 11px; font-weight: 600; margin-top: 4px; }
+
+    /* =========================================================
+       PRESS PAGE
+    ========================================================= */
+    .press-bg { background: #0A0F1C; min-height: 100vh; }
+    .press-hero {
+      text-align: center; padding: 6rem 2rem 4rem;
+      background: linear-gradient(180deg,rgba(0,185,99,.05),rgba(10,15,28,0) 100%); position: relative;
+    }
+    .press-hero::before {
+      content: ''; position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 600px; height: 600px; background: radial-gradient(circle,rgba(0,185,99,.15),transparent 70%);
+      border-radius: 50%; filter: blur(80px); z-index: -1;
+    }
+    .press-hero h1 { font-size: 3.5rem; font-weight: 800; margin-bottom: 1rem; background: linear-gradient(135deg,#fff,#00B963); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; animation: fadeInUp .8s ease-out; }
+    .press-hero p { font-size: 1.25rem; color: #8B95A6; max-width: 600px; margin: 0 auto; animation: fadeInUp .8s ease-out .2s both; }
+    .press-container { max-width: 1400px; margin: 0 auto; padding: 4rem 2rem; }
+    .press-grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(380px,1fr)); gap: 2rem; animation: fadeInUp .8s ease-out .4s both; }
+    .press-card { background: #141B2B; border-radius: 16px; overflow: hidden; transition: all .4s; border: 1px solid rgba(255,255,255,.05); text-decoration: none; display: block; position: relative; }
+    .press-card:hover { transform: translateY(-8px); border-color: rgba(0,185,99,.3); box-shadow: 0 20px 40px rgba(0,0,0,.4); }
+    .press-image-container { position: relative; width: 100%; height: 220px; overflow: hidden; background: #0F1621; }
+    .press-image { width: 100%; height: 100%; object-fit: cover; transition: transform .5s; }
+    .press-card:hover .press-image { transform: scale(1.08); }
+    .language-badge { position: absolute; top: 12px; left: 12px; background: rgba(0,0,0,.7); backdrop-filter: blur(8px); color: white; padding: 4px 12px; border-radius: 6px; font-size: .75rem; font-weight: 600; }
+    .source-logo { position: absolute; bottom: 12px; left: 12px; right: 12px; height: 32px; object-fit: contain; object-position: left; filter: brightness(0) invert(1); opacity: .9; }
+    .press-content { padding: 1.5rem; }
+    .press-title { font-size: 1.15rem; font-weight: 700; line-height: 1.4; margin-bottom: 1rem; color: #E8EEF3; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+    .press-meta { display: flex; justify-content: space-between; align-items: center; color: #8B95A6; font-size: .875rem; }
+    .press-source { font-weight: 600; color: #00B963; }
+
+    /* =========================================================
+       PROFILE PAGE
+    ========================================================= */
+    .profile-bg {
+      background: #0d0f14; min-height: 100vh;
+      display: flex; align-items: center; justify-content: center;
+      position: relative; overflow: hidden;
+    }
+    .profile-bg::before {
+      content: ''; position: absolute; inset: 0;
+      background-image: linear-gradient(rgba(0,212,255,.04) 1px,transparent 1px), linear-gradient(90deg,rgba(0,212,255,.04) 1px,transparent 1px);
+      background-size: 44px 44px; pointer-events: none;
+    }
+    .glow-orb { position: absolute; border-radius: 50%; filter: blur(100px); pointer-events: none; animation: pulse 8s ease-in-out infinite alternate; }
+    .orb1 { width:500px;height:500px;background:rgba(0,212,255,.09);top:-200px;left:-150px; }
+    .orb2 { width:400px;height:400px;background:rgba(255,77,141,.07);bottom:-150px;right:-100px;animation-delay:3s; }
+    .orb3 { width:300px;height:300px;background:rgba(0,245,195,.06);top:50%;left:60%;animation-delay:6s; }
+    .profile-wrapper { position: relative; z-index: 1; width: 100%; max-width: 580px; margin: 36px 16px; animation: rise .8s cubic-bezier(.22,1,.36,1) both; }
+    .top-label { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; }
+    .top-label .line { height: 1px; flex: 1; background: linear-gradient(90deg,var(--cyan),transparent); }
+    .top-label span { font-family: 'Sora',sans-serif; font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: var(--cyan); }
+    .profile-card { background: #181c27; border: 1px solid rgba(255,255,255,.13); border-radius: 24px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,212,255,.05),0 24px 80px rgba(0,0,0,.5),inset 0 1px 0 rgba(255,255,255,.05); }
+    .profile-card::before { content:''; position:absolute;top:0;left:10%;right:10%;height:1px;background:linear-gradient(90deg,transparent,var(--cyan),transparent); pointer-events:none; }
+    .profile-card { position: relative; }
+    .card-head { padding:36px 44px 28px;background:linear-gradient(160deg,rgba(0,212,255,.05) 0%,transparent 60%);border-bottom:1px solid rgba(255,255,255,.07);display:flex;align-items:flex-start;justify-content:space-between;gap:20px; }
+    .head-text h1 { font-family:'Sora',sans-serif;font-size:30px;font-weight:800;color:#e8eaf0;line-height:1.15;margin-bottom:6px; }
+    .head-text h1 em { font-style:normal;background:linear-gradient(90deg,var(--cyan),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .head-text p { color:#6b7280;font-size:13px;line-height:1.5; }
+    .lang-pill { display:flex;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.13);border-radius:100px;padding:3px;flex-shrink:0;gap:2px; }
+    .lang-pill button { padding:6px 14px;border-radius:100px;border:none;background:transparent;color:#6b7280;font-size:12px;font-weight:600;cursor:pointer;transition:all .22s; }
+    .lang-pill button.active { background:linear-gradient(135deg,var(--cyan),var(--teal));color:#0d0f14; }
+    .avatar-row { display:flex;align-items:center;gap:18px;padding:24px 44px 0; }
+    .avatar-ring { width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,var(--cyan),var(--teal),var(--pink));padding:2.5px;cursor:pointer;transition:transform .25s,box-shadow .25s;flex-shrink:0; }
+    .avatar-ring:hover { transform:scale(1.07);box-shadow:0 0 28px rgba(0,212,255,.4); }
+    .avatar-inner { width:100%;height:100%;border-radius:50%;overflow:hidden;background:#13161e;display:flex;align-items:center;justify-content:center; }
+    .avatar-inner img { width:100%;height:100%;object-fit:cover;border-radius:50%; }
+    .avatar-placeholder { display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;color:#6b7280; }
+    .avatar-placeholder svg { width:22px;height:22px;opacity:.6; }
+    .avatar-placeholder span { font-size:9px;letter-spacing:.5px; }
+    .avatar-info h3 { font-family:'Sora',sans-serif;font-size:14px;font-weight:700;color:#e8eaf0;margin-bottom:3px; }
+    .avatar-info p { font-size:12px;color:#6b7280; }
+    .upload-chip { display:inline-flex;align-items:center;gap:5px;margin-top:8px;padding:4px 12px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);border-radius:100px;color:var(--cyan);font-size:11px;font-weight:600;cursor:pointer;transition:background .2s; }
+    .upload-chip:hover { background:rgba(0,212,255,.15); }
+    #photoInput { display:none; }
+    .profile-form-body { padding:28px 44px 40px; }
+    .sec-title { display:flex;align-items:center;gap:10px;margin-bottom:16px; }
+    .sec-title span { font-family:'Sora',sans-serif;font-size:10px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:#6b7280; }
+    .sec-title::after { content:'';flex:1;height:1px;background:rgba(255,255,255,.07); }
+    .profile-field { margin-bottom:16px; }
+    .profile-field label { display:flex;align-items:center;gap:6px;font-size:10.5px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:#6b7280;margin-bottom:8px; }
+    .profile-field label .dot { width:5px;height:5px;border-radius:50%;background:var(--cyan);opacity:.6; }
+    .profile-field input,.profile-field textarea { width:100%;background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.13);border-radius:12px;padding:13px 16px;color:#e8eaf0;font-family:'Manrope',sans-serif;font-size:14px;outline:none;transition:border-color .2s,box-shadow .2s,background .2s; }
+    .profile-field input:focus,.profile-field textarea:focus { border-color:rgba(0,212,255,.5);background:rgba(0,212,255,.03);box-shadow:0 0 0 3px rgba(0,212,255,.08); }
+    .profile-field input::placeholder,.profile-field textarea::placeholder { color:rgba(255,255,255,.18);font-size:13px; }
+    .profile-field textarea { resize:none;height:82px;line-height:1.6; }
+    .prow2 { display:grid;grid-template-columns:1fr 1fr;gap:14px; }
+    .btn-wrap { margin-top:26px; }
+    .btn-submit { width:100%;padding:15px 20px;border:none;border-radius:14px;cursor:pointer;font-family:'Sora',sans-serif;font-size:15px;font-weight:700;letter-spacing:.5px;background:linear-gradient(135deg,var(--cyan),var(--teal));color:#0d0f14;position:relative;overflow:hidden;transition:transform .18s,box-shadow .18s;box-shadow:0 4px 24px rgba(0,212,255,.25);display:flex;align-items:center;justify-content:center; }
+    .btn-submit:hover:not(:disabled) { transform:translateY(-2px);box-shadow:0 8px 36px rgba(0,212,255,.35); }
+    .btn-submit:disabled { opacity:.6;cursor:not-allowed; }
+    .btn-inner { position:relative;z-index:1;display:flex;align-items:center;gap:10px; }
+    .spin-anim { width:18px;height:18px;border:2.5px solid rgba(0,0,0,.2);border-top-color:#0d0f14;border-radius:50%;animation:spin .7s linear infinite;display:none; }
+    .progress-dots { display:flex;justify-content:center;gap:6px;margin-top:20px; }
+    .pdot { width:6px;height:6px;border-radius:50%;background:rgba(255,255,255,.13);transition:all .3s; }
+    .pdot.active { background:var(--cyan);width:20px;border-radius:3px;box-shadow:0 0 8px var(--cyan); }
+    .success-screen { display:none;padding:60px 44px;text-align:center;flex-direction:column;align-items:center;gap:16px; }
+    .success-screen.show { display:flex; }
+    .success-ring { width:90px;height:90px;border-radius:50%;border:2px solid var(--cyan);display:flex;align-items:center;justify-content:center;box-shadow:0 0 40px rgba(0,212,255,.25),inset 0 0 20px rgba(0,212,255,.05);animation:popIn .6s .1s both;margin-bottom:8px; }
+    .success-ring svg { width:42px;height:42px; }
+    .success-screen h2 { font-family:'Sora',sans-serif;font-size:26px;font-weight:800;color:#e8eaf0; }
+    .success-screen h2 em { font-style:normal;background:linear-gradient(90deg,var(--cyan),var(--teal));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text; }
+    .success-screen p { color:#6b7280;font-size:14px;line-height:1.6;max-width:320px; }
+    .profile-preview { display:flex;align-items:center;gap:14px;background:rgba(0,212,255,.05);border:1px solid rgba(0,212,255,.15);border-radius:16px;padding:14px 20px;width:100%;max-width:340px;margin:8px 0; }
+    .preview-pic { width:48px;height:48px;border-radius:50%;object-fit:cover;border:2px solid var(--cyan); }
+    .preview-info strong { display:block;color:#e8eaf0;font-size:14px;margin-bottom:2px; }
+    .preview-info span { color:#6b7280;font-size:12px; }
+    .btn-new { margin-top:8px;padding:11px 28px;border-radius:100px;background:transparent;border:1.5px solid rgba(0,212,255,.3);color:var(--cyan);font-family:'Sora',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s; }
+    .btn-new:hover { background:rgba(0,212,255,.08);border-color:var(--cyan); }
+
+    /* =========================================================
+       ██  UNIFIED PROFESSIONAL FOOTER
+    ========================================================= */
+    .site-footer {
+      background: var(--footer-bg);
+      position: relative;
+      overflow: hidden;
+      font-family: 'Sora', sans-serif;
+    }
+
+    /* Decorative top border gradient */
+    .site-footer::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 3px;
+      background: linear-gradient(90deg,
+        transparent 0%,
+        #1b5e20 15%,
+        #f9a825 35%,
+        #2e7d32 50%,
+        #f9a825 65%,
+        #1b5e20 85%,
+        transparent 100%
+      );
+      background-size: 200% auto;
+      animation: footerShimmer 6s linear infinite;
+    }
+
+    /* Background texture */
+    .site-footer::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image: 
+        radial-gradient(circle at 10% 50%, rgba(27,94,32,0.08) 0%, transparent 50%),
+        radial-gradient(circle at 90% 20%, rgba(249,168,37,0.05) 0%, transparent 40%);
+      pointer-events: none;
+    }
+
+    .footer-inner {
+      position: relative;
+      z-index: 1;
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 70px 6% 0;
+    }
+
+    /* Top band with logo + newsletter */
+    .footer-topband {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 40px;
+      padding-bottom: 50px;
+      border-bottom: 1px solid var(--footer-border);
+      flex-wrap: wrap;
+    }
+
+    .footer-brand { flex: 0 0 auto; max-width: 320px; }
+
+    .footer-logo-wrap {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+    .footer-logo-wrap img {
+      width: 56px;
+      height: 56px;
+      border-radius: 14px;
+      border: 2px solid rgba(249,168,37,0.3);
+      box-shadow: 0 0 20px rgba(27,94,32,0.4);
+    }
+    .footer-logo-text h3 {
+      font-family: 'Playfair Display', serif;
+      font-size: 1.5rem;
+      font-weight: 900;
+      color: #fff;
+      letter-spacing: -0.5px;
+    }
+    .footer-logo-text span {
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: var(--footer-heading);
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    .footer-brand p {
+      font-size: 0.92rem;
+      color: var(--footer-text);
+      line-height: 1.75;
+      margin-bottom: 22px;
+    }
+
+    /* Social icons */
+    .footer-socials {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .footer-socials a {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.1);
+      background: rgba(255,255,255,0.04);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--footer-text);
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.3s;
+    }
+    .footer-socials a:hover {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: var(--primary-dark);
+      transform: translateY(-3px);
+      box-shadow: 0 6px 16px rgba(249,168,37,0.35);
+    }
+
+    /* Newsletter */
+    .footer-newsletter { flex: 0 0 auto; max-width: 360px; }
+    .footer-newsletter h4 {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--footer-heading);
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      margin-bottom: 8px;
+    }
+    .footer-newsletter p {
+      font-size: 0.88rem;
+      color: var(--footer-text);
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    .newsletter-form {
+      display: flex;
+      gap: 0;
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .newsletter-form input {
+      flex: 1;
+      padding: 14px 18px;
+      background: rgba(255,255,255,0.05);
+      border: none;
+      outline: none;
+      color: #fff;
+      font-size: 0.9rem;
+      font-family: 'Sora', sans-serif;
+    }
+    .newsletter-form input::placeholder { color: rgba(255,255,255,0.3); }
+    .newsletter-form button {
+      padding: 14px 22px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-light));
+      color: var(--primary-dark);
+      border: none;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+      transition: all 0.3s;
+      white-space: nowrap;
+      font-family: 'Sora', sans-serif;
+    }
+    .newsletter-form button:hover {
+      background: linear-gradient(135deg, var(--accent-light), var(--accent));
+      letter-spacing: 0.3px;
+    }
+
+    /* Main grid */
+    .footer-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 40px;
+      padding: 50px 0;
+      border-bottom: 1px solid var(--footer-border);
+    }
+
+    .footer-col h4 {
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--footer-heading);
+      text-transform: uppercase;
+      letter-spacing: 2.5px;
+      margin-bottom: 22px;
+      position: relative;
+      padding-bottom: 12px;
+    }
+    .footer-col h4::after {
+      content: '';
+      position: absolute;
+      bottom: 0; left: 0;
+      width: 28px; height: 2px;
+      background: var(--accent);
+      border-radius: 2px;
+    }
+
+    .footer-col ul { list-style: none; }
+    .footer-col ul li { margin-bottom: 12px; }
+    .footer-col ul li a {
+      color: var(--footer-text);
+      text-decoration: none;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.25s;
+      cursor: pointer;
+    }
+    .footer-col ul li a:hover {
+      color: var(--footer-link-hover);
+      transform: translateX(5px);
+    }
+    .footer-col ul li a .link-arrow {
+      font-size: 0.7rem;
+      opacity: 0;
+      transition: opacity 0.2s;
+      color: var(--accent);
+    }
+    .footer-col ul li a:hover .link-arrow { opacity: 1; }
+
+    /* Contact column */
+    .footer-contact-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .footer-contact-icon {
+      width: 34px;
+      height: 34px;
+      background: rgba(249,168,37,0.1);
+      border: 1px solid rgba(249,168,37,0.2);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 0.85rem;
+      color: var(--accent);
+    }
+    .footer-contact-text p {
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.4);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 3px;
+    }
+    .footer-contact-text a,
+    .footer-contact-text span {
+      color: var(--footer-text);
+      font-size: 0.9rem;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-contact-text a:hover { color: var(--accent); }
+
+    /* Active states badge */
+    .footer-active-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(27,94,32,0.25);
+      border: 1px solid rgba(27,94,32,0.5);
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      color: #a5d6a7;
+      font-weight: 600;
+      margin-bottom: 14px;
+    }
+    .footer-active-badge::before {
+      content: '';
+      width: 7px; height: 7px;
+      border-radius: 50%;
+      background: #66bb6a;
+      box-shadow: 0 0 6px #66bb6a;
+      animation: pulse 2s infinite;
+    }
+
+    .footer-regions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      margin-top: 6px;
+    }
+    .footer-region-chip {
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 6px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      color: var(--footer-text);
+    }
+
+    /* Bottom bar */
+    .footer-bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 22px 0;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .footer-bottom-left {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .footer-leaf-icon {
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.85rem;
+    }
+    .footer-bottom-left p {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.35);
+    }
+    .footer-bottom-left p strong { color: rgba(255,255,255,0.55); }
+
+    .footer-bottom-links {
+      display: flex;
+      gap: 24px;
+    }
+    .footer-bottom-links a {
+      font-size: 0.82rem;
+      color: rgba(255,255,255,0.35);
+      text-decoration: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+    .footer-bottom-links a:hover { color: var(--accent); }
+
+    .footer-bottom-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.78rem;
+      color: rgba(255,255,255,0.3);
+    }
+    .footer-bottom-badge i { color: var(--accent); font-size: 0.75rem; }
+
+    /* =========================================================
+       AI CHATBOT
+    ========================================================= */
+    .ai-chat-button { position: fixed; bottom: 30px; right: 30px; width: 70px; height: 70px; border-radius: 50%; background: linear-gradient(135deg,#4285f4,#34a853,#fbbc04,#ea4335); color: white; border: none; cursor: pointer; box-shadow: 0 8px 24px rgba(0,0,0,.3); display: flex; align-items: center; justify-content: center; font-size: 32px; z-index: 9999; transition: all .3s; animation: pulseGlow 2s infinite; }
+    .ai-chat-button:hover { transform: scale(1.1); }
+    .ai-chat-window { position: fixed; bottom: 115px; right: 30px; width: 400px; height: 600px; background: white; border-radius: 24px; box-shadow: 0 12px 48px rgba(0,0,0,.3); display: none; flex-direction: column; z-index: 9998; overflow: hidden; }
+    .ai-chat-window.active { display: flex; animation: slideUp .3s ease; }
+    .ai-chat-header { background: linear-gradient(135deg,#4285f4,#34a853); color: white; padding: 24px; display: flex; justify-content: space-between; align-items: center; }
+    .ai-chat-header h3 { margin: 0; font-size: 1.2rem; display: flex; align-items: center; gap: 12px; font-weight: 700; }
+    .ai-header-icon { width: 40px; height: 40px; background: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+    .ai-close-btn { background: rgba(255,255,255,.2); border: none; color: white; font-size: 28px; cursor: pointer; padding: 5px 12px; border-radius: 10px; transition: background .3s; }
+    .ai-close-btn:hover { background: rgba(255,255,255,.3); }
+    .ai-chat-messages { flex: 1; padding: 24px; overflow-y: auto; background: #f8f9fa; }
+    .ai-message { margin-bottom: 20px; animation: fadeInUp .3s ease; }
+    .ai-message.user { text-align: right; }
+    .ai-message-bubble { display: inline-block; padding: 16px 20px; border-radius: 20px; max-width: 85%; word-wrap: break-word; box-shadow: 0 2px 8px rgba(0,0,0,.08); }
+    .ai-message.user .ai-message-bubble { background: linear-gradient(135deg,#4285f4,#34a853); color: white; border-radius: 20px 20px 4px 20px; }
+    .ai-message.bot  .ai-message-bubble { background: white; color: #333; border: 1px solid #e0e0e0; border-radius: 20px 20px 20px 4px; }
+    .ai-bot-avatar { width: 36px; height: 36px; background: linear-gradient(135deg,#4285f4,#34a853); border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; margin-right: 10px; color: white; font-size: 1.1rem; vertical-align: middle; }
+    .ai-contact-info { font-size: .95rem; line-height: 1.8; }
+    .ai-contact-info strong { color: #4285f4; display: block; margin-top: 10px; margin-bottom: 5px; }
+    .ai-chat-input-area { padding: 20px; background: white; border-top: 1px solid #e0e0e0; display: flex; gap: 12px; }
+    .ai-chat-input { flex: 1; padding: 15px 20px; border: 1px solid #ddd; border-radius: 25px; outline: none; font-size: .95rem; transition: border .3s; }
+    .ai-chat-input:focus { border-color: #4285f4; }
+    .ai-send-btn { background: linear-gradient(135deg,#4285f4,#34a853); color: white; border: none; width: 52px; height: 52px; border-radius: 50%; cursor: pointer; font-size: 1.2rem; transition: all .3s; }
+    .ai-send-btn:hover { transform: scale(1.05); }
+    .ai-typing-indicator { display: none; padding: 10px 0; }
+    .ai-typing-indicator span { height: 8px; width: 8px; background: #4285f4; border-radius: 50%; display: inline-block; margin: 0 2px; animation: typing 1.4s infinite; }
+    .ai-typing-indicator span:nth-child(2) { animation-delay: .2s; background: #34a853; }
+    .ai-typing-indicator span:nth-child(3) { animation-delay: .4s; background: #fbbc04; }
+
+    /* GLOBAL TOAST */
+    .toast-global { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); z-index: 9999; padding: 13px 24px; border-radius: 100px; font-size: 13.5px; font-weight: 600; box-shadow: 0 8px 32px rgba(0,0,0,.4); transition: transform .4s,opacity .4s; opacity: 0; white-space: nowrap; display: flex; align-items: center; gap: 8px; }
+    .toast-global.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+    .toast-global.success { background: linear-gradient(135deg,var(--cyan),var(--teal)); color: #0d0f14; }
+    .toast-global.error   { background: linear-gradient(135deg,#ff4d4d,#ff8080); color: #fff; }
+
+    /* =========================================================
+       RESPONSIVE
+    ========================================================= */
+    @media (max-width: 1100px) {
+      .footer-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    @media (max-width: 968px) {
+      .hero h1 { font-size: 3rem; }
+      .section h2, .ai-content h2, .app-content h2 { font-size: 2.5rem; }
+      .ai-container, .app-container, .map-container { grid-template-columns: 1fr; gap: 50px; }
+      .ai-chat-window { width: calc(100% - 30px); height: 75vh; bottom: 100px; right: 15px; }
+      .contact-main { grid-template-columns: 1fr; }
+      .gps-layout { grid-template-columns: 1fr; }
+      .gps-map-wrap { height: 460px; border-radius: 0 0 18px 18px; }
+      .mission-grid { grid-template-columns: 1fr; }
+      .header-inner { flex-direction: column; gap: 10px; }
+      .service-nav { flex-wrap: wrap; }
+      .press-grid { grid-template-columns: repeat(auto-fill,minmax(300px,1fr)); }
+      .footer-topband { flex-direction: column; }
+      .footer-newsletter { max-width: 100%; }
+    }
+
+    @media (max-width: 600px) {
+      .section { padding: 80px 5%; }
+      .hero h1 { font-size: 2.2rem; }
+      .section h2 { font-size: 2rem; }
+      .hero-buttons { flex-direction: column; }
+      .btn { width: 100%; justify-content: center; }
+      .ai-stats { grid-template-columns: 1fr; }
+      .card-head { padding: 28px 24px; flex-direction: column; }
+      .profile-form-body { padding: 22px 24px 32px; }
+      .avatar-row { padding: 20px 24px 0; }
+      .prow2 { grid-template-columns: 1fr; }
+      .press-grid { grid-template-columns: 1fr; }
+      .press-hero h1 { font-size: 2rem; }
+      .footer-grid { grid-template-columns: 1fr; gap: 30px; }
+      .footer-bottom { flex-direction: column; align-items: flex-start; gap: 12px; }
+      .footer-bottom-links { flex-wrap: wrap; gap: 14px; }
+      .footer-inner { padding: 50px 5% 0; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="toast-global" id="globalToast"></div>
+
+<!-- STICKY HEADER -->
+<header id="mainHeader">
+  <div class="logo" onclick="navigateTo('home')">
+    <img src="https://img.sanishtech.com/u/4b566ef4348b320888dffcf6b3f503a5.png" alt="B.L Verdantix">
+    <div class="logo-text">
+      <h2>B.L Verdantix</h2>
+      <p>Agri Solutions</p>
+    </div>
+  </div>
+  <nav id="navMenu">
+    <a onclick="navigateTo('home')">Home</a>
+    <a onclick="navigateTo('about')">About Us</a>
+    <a onclick="navigateTo('services')">Our Services</a>
+    <a onclick="navigateTo('press')">Press</a>
+    <a onclick="navigateTo('contact')">Contact Us</a>
+  </nav>
+  <div class="profile-btn" onclick="navigateTo('profile')" title="Profile">
+    <i class="fas fa-user"></i>
+  </div>
+  <div class="hamburger" id="hamburger"><span></span><span></span><span></span></div>
+</header>
+<div class="overlay" id="overlay"></div>
+
+<!-- ============================================================
+     SHARED FOOTER TEMPLATE (injected by JS)
+============================================================ -->
+<template id="footerTemplate">
+  <footer class="site-footer">
+    <div class="footer-inner">
+
+      <!-- Top band -->
+      <div class="footer-topband">
+        <div class="footer-brand">
+          <div class="footer-logo-wrap">
+            <img src="https://img.sanishtech.com/u/4b566ef4348b320888dffcf6b3f503a5.png" alt="B.L Verdantix Logo">
+            <div class="footer-logo-text">
+              <h3>B.L Verdantix</h3>
+              <span>Agri Technologies</span>
+            </div>
+          </div>
+          <p>Empowering farmers with AI-driven plant care, disease detection, and smart agricultural tools. Building a sustainable future, one harvest at a time.</p>
+          <div class="footer-socials">
+            <a href="https://www.instagram.com/b.l.verdantixagri2026" target="_blank" title="Instagram"><i class="fab fa-instagram"></i></a>
+            <a href="https://www.linkedin.com/in/b-l-verdantix-ba21343a9" target="_blank" title="LinkedIn"><i class="fab fa-linkedin"></i></a>
+            <a href="https://x.com/verdantixa97632" target="_blank" title="Twitter"><i class="fab fa-twitter"></i></a>
+            <a href="https://www.facebook.com/share/1KC5CAfjHD/" target="_blank" title="Facebook"><i class="fab fa-facebook"></i></a>
+            <a href="https://www.youtube.com/@B.LVerdantix" target="_blank" title="YouTube"><i class="fab fa-youtube"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-newsletter">
+          <h4>🌿 Stay Updated</h4>
+          <p>Get the latest agri tips, pest alerts & product updates delivered to your inbox.</p>
+          <div class="newsletter-form">
+            <input type="email" id="newsletterEmail" placeholder="your@email.com">
+            <button onclick="subscribeNewsletter()">Subscribe</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main grid -->
+      <div class="footer-grid">
+
+        <!-- Column 1: Navigation -->
+        <div class="footer-col">
+          <h4>Navigate</h4>
+          <ul>
+            <li><a onclick="navigateTo('home')"><span class="link-arrow">›</span>Home</a></li>
+            <li><a onclick="navigateTo('about')"><span class="link-arrow">›</span>About Us</a></li>
+            <li><a onclick="navigateTo('services')"><span class="link-arrow">›</span>Our Services</a></li>
+            <li><a onclick="navigateTo('press')"><span class="link-arrow">›</span>Press & Media</a></li>
+            <li><a onclick="navigateTo('contact')"><span class="link-arrow">›</span>Contact Us</a></li>
+            <li><a onclick="navigateTo('profile')"><span class="link-arrow">›</span>Create Profile</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 2: Services -->
+        <div class="footer-col">
+          <h4>Our Services</h4>
+          <ul>
+            <li><a href="http://127.0.0.1:5501/disease.html"><span class="link-arrow">›</span>🔬 Pest & Disease Finder</a></li>
+            <li><a onclick="navigateTo('services')"><span class="link-arrow">›</span>🗺️ GPS Land Measurement</a></li>
+            <li><a onclick="navigateTo('services')"><span class="link-arrow">›</span>🌾 Fertilizer Calculator</a></li>
+            <li><a onclick="navigateTo('services')"><span class="link-arrow">›</span>💧 Irrigation Calculator</a></li>
+            <li><a onclick="navigateTo('services')"><span class="link-arrow">›</span>🌳 Tree Dose Calculator</a></li>
+            <li><a onclick="navigateTo('services')"><span class="link-arrow">›</span>📏 Area Converter</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 3: Active Regions -->
+        <div class="footer-col">
+          <h4>Active Regions</h4>
+          <div class="footer-active-badge">Actively Serving</div>
+          <div class="footer-regions">
+            <span class="footer-region-chip">📍 Uttar Pradesh</span>
+            <span class="footer-region-chip">📍 Punjab</span>
+            <span class="footer-region-chip">📍 Haryana</span>
+            <span class="footer-region-chip">📍 Uttarakhand</span>
+            <span class="footer-region-chip">📍 Bihar</span>
+          </div>
+          <ul style="margin-top:20px">
+            <li><a href="#"><span class="link-arrow">›</span>🏪 Visit Our Store – Mawana, Meerut</a></li>
+            <li><a onclick="navigateTo('about')"><span class="link-arrow">›</span>🌱 Our Journey & Legacy</a></li>
+            <li><a onclick="navigateTo('about')"><span class="link-arrow">›</span>👥 Meet Our Team</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 4: Contact -->
+        <div class="footer-col">
+          <h4>Get In Touch</h4>
+          <div class="footer-contact-item">
+            <div class="footer-contact-icon"><i class="fas fa-phone"></i></div>
+            <div class="footer-contact-text">
+              <p>Call Us</p>
+              <a href="tel:+919058545076">+91 90585 45076</a>
+            </div>
+          </div>
+          <div class="footer-contact-item">
+            <div class="footer-contact-icon"><i class="fas fa-envelope"></i></div>
+            <div class="footer-contact-text">
+              <p>Email Us</p>
+              <a href="mailto:b.l.verdantix2026@gmail.com">b.l.verdantix2026@gmail.com</a>
+            </div>
+          </div>
+          <div class="footer-contact-item">
+            <div class="footer-contact-icon"><i class="fas fa-map-marker-alt"></i></div>
+            <div class="footer-contact-text">
+              <p>Visit Us</p>
+              <a href="https://maps.app.goo.gl/zS5ygzcMFFMb6kZCA" target="_blank">CCS University, Meerut, U.P.</a>
+            </div>
+          </div>
+          <div class="footer-contact-item">
+            <div class="footer-contact-icon"><i class="fas fa-clock"></i></div>
+            <div class="footer-contact-text">
+              <p>Business Hours</p>
+              <span>Mon–Sat: 9:00 AM – 6:00 PM</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Bottom bar -->
+      <div class="footer-bottom">
+        <div class="footer-bottom-left">
+          <div class="footer-leaf-icon">🌿</div>
+          <p>© 2026 <strong>B.L Verdantix Agri Technologies</strong>. All Rights Reserved.</p>
+        </div>
+        <div class="footer-bottom-links">
+          <a href="#">Privacy Policy</a>
+          <a href="#">Terms of Use</a>
+          <a href="#">Disclaimer</a>
+          <a href="#">Sitemap</a>
+        </div>
+        <div class="footer-bottom-badge">
+          <i class="fas fa-shield-alt"></i>
+          Secured &amp; Verified
+        </div>
+      </div>
+
+    </div>
+  </footer>
+</template>
+
+<!-- ============================================================
+     PAGE: HOME
+============================================================ -->
+<div class="page active" id="page-home">
+  <section class="hero">
+    <div class="hero-bg"></div>
+    <div class="hero-content">
+      <div class="hero-badge"><i class="fas fa-leaf"></i><span>AI-Powered Plant Care</span></div>
+      <h1>Identify Plants & Diseases Instantly</h1>
+      <p>Snap a photo and get instant plant identification, disease diagnosis, and expert care advice powered by advanced AI technology.</p>
+      <div class="hero-buttons">
+        <a href="http://127.0.0.1:5501/disease.html" class="btn btn-primary"><i class="fas fa-camera"></i> Pest Finder</a>
+        <a onclick="navigateTo('profile')" class="btn btn-secondary">Create Profile <i class="fas fa-user-plus"></i></a>
+      </div>
+    </div>
+  </section>
+
+  <section class="features-section">
+    <div class="section-header"><span class="section-badge">Key Features</span><h2>Everything You Need for Plant Care</h2></div>
+    <div class="features-grid">
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-seedling"></i></div><h3>Plant Identification</h3><p>Identify 17,000+ plant species with 98% accuracy using advanced AI recognition technology.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-stethoscope"></i></div><h3>Disease Detection</h3><p>Diagnose plant diseases and pests early to save your crops with instant treatment recommendations.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-pills"></i></div><h3>Treatment Guide</h3><p>Get organic and chemical treatment options with detailed instructions for plant recovery.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-mobile-alt"></i></div><h3>Mobile Friendly</h3><p>Scan plants anywhere, anytime with our mobile-optimized interface and camera integration.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-language"></i></div><h3>Bilingual Support</h3><p>Available in Hindi and English to serve farmers across India with local language support.</p></div>
+      <div class="feature-card"><div class="feature-icon"><i class="fas fa-history"></i></div><h3>Scan History</h3><p>Track your plant health over time and access previous diagnoses and recommendations.</p></div>
+    </div>
+  </section>
+
+  <section class="ai-section">
+    <div class="ai-container">
+      <div class="ai-content">
+        <h2>Advanced AI Plant Recognition</h2>
+        <p>Our cutting-edge artificial intelligence has been trained on millions of plant images to provide you with the most accurate identification and disease detection available.</p>
+        <p>Powered by revolutionary technology, we help farmers, gardeners, and plant enthusiasts care for their plants with professional-grade diagnostics.</p>
+        <div class="ai-stats">
+          <div class="stat-item"><div class="stat-number">17K+</div><div class="stat-label">Plant Species</div></div>
+          <div class="stat-item"><div class="stat-number">98%</div><div class="stat-label">Accuracy Rate</div></div>
+          <div class="stat-item"><div class="stat-number">10K+</div><div class="stat-label">Diseases Detected</div></div>
+          <div class="stat-item"><div class="stat-number">24/7</div><div class="stat-label">Available</div></div>
+        </div>
+      </div>
+      <div class="ai-image"><img src="https://images.unsplash.com/photo-1530836369250-ef72a3f5cda8?w=800" alt="AI Plant Recognition"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header"><span class="section-badge">What We Identify</span><h2>Comprehensive Plant Database</h2></div>
+    <div class="solutions-grid">
+      <div class="solution-card"><img src="https://images.unsplash.com/photo-1464226184884-fa280b87c399?w=800" alt="Crops"><div class="solution-content"><h3>Crops & Vegetables</h3><p>Identify and diagnose diseases in major crops including wheat, rice, tomatoes, potatoes, and more.</p></div></div>
+      <div class="solution-card"><img src="https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=800" alt="Fruits"><div class="solution-content"><h3>Fruits & Trees</h3><p>Recognize fruit plants, detect diseases in apple, mango, citrus trees and get expert care recommendations.</p></div></div>
+      <div class="solution-card"><img src="https://images.unsplash.com/photo-1466781783364-36c955e42a7f?w=800" alt="Flowers"><div class="solution-content"><h3>Flowers & Ornamentals</h3><p>Identify decorative plants, flowers, and garden species with detailed care guides and pest management.</p></div></div>
+    </div>
+  </section>
+
+  <section class="how-it-works">
+    <div class="section-header"><span class="section-badge">Simple Process</span><h2>How It Works</h2><p>Get plant identification and disease diagnosis in three simple steps</p></div>
+    <div class="steps-container">
+      <div class="step-card"><div class="step-number">1</div><h3>Take a Photo</h3><p>Capture a clear image of your plant's leaves, flowers, or affected areas using your phone camera.</p></div>
+      <div class="step-card"><div class="step-number">2</div><h3>AI Analysis</h3><p>Our advanced AI instantly analyzes the image to identify the plant species and detect any diseases.</p></div>
+      <div class="step-card"><div class="step-number">3</div><h3>Get Results</h3><p>Receive detailed identification, diagnosis, and treatment recommendations in seconds.</p></div>
+    </div>
+  </section>
+
+  <section class="app-section">
+    <div class="app-container">
+      <div class="app-content">
+        <h2>Care for Your Plants on the Go</h2>
+        <p>Download our mobile app for instant plant identification wherever you are.</p>
+        <ul class="app-features">
+          <li>Instant plant identification</li>
+          <li>Disease diagnosis with photos</li>
+          <li>Treatment recommendations</li>
+          <li>Care reminders and tips</li>
+          <li>Offline database access</li>
+          <li>Expert support available</li>
+        </ul>
+        <div class="app-buttons">
+          <a href="#" class="app-btn"><i class="fab fa-google-play"></i> Google Play</a>
+          <a href="#" class="app-btn"><i class="fab fa-apple"></i> App Store</a>
+        </div>
+      </div>
+      <div class="app-mockup"><img src="https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?w=600" alt="App" style="max-height:500px"></div>
+    </div>
+  </section>
+
+  <section class="section">
+    <div class="section-header"><span class="section-badge">Our Mission</span><h2>Empowering Farmers with AI Technology</h2><p>B.L Verdantix Agri Technologies combines cutting-edge AI with agricultural expertise to help farmers identify plant diseases early and take preventive action. We're committed to transforming agriculture through science, digital innovation and sustainability.</p></div>
+  </section>
+
+  <section class="recognition-section">
+    <div class="section-header" style="position:relative;z-index:2"><span class="section-badge">Our Journey</span><h2>Recognition & Expert Talks</h2></div>
+    <div class="slider-container">
+      <div class="slider-track">
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/6e0bbb8adfef7f873c2babc559def138.jpeg" alt="Bhajan Lal"><div class="slider-content"><p><strong>Bhajan Lal (Founder)</strong></p><p>1945 – 2002</p></div></div>
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/5636d31ad1df5cfa2b270748c6531fc8.jpeg" alt="Advisor"><div class="slider-content"><p><strong>Amarjit Singh</strong></p><p>Senior Advisor</p></div></div>
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/d62265f2f4b2f3681f6a63c69ff02b14.jpeg" alt="Karan"><div class="slider-content"><p><strong>Karan Chaudhary</strong></p><p>CEO</p></div></div>
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/2d32eae1bb2753c94f434ddad97f5272.jpeg" alt="Aman"><div class="slider-content"><p><strong>Aman Gupt</strong></p><p>Tech Lead</p></div></div>
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/6e0bbb8adfef7f873c2babc559def138.jpeg" alt="B"><div class="slider-content"><p><strong>Bhajan Lal</strong></p><p>1945 – 2002</p></div></div>
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/6e0bbb8adfef7f873c2babc559def138.jpeg" alt="Bhajan Lal"><div class="slider-content"><p><strong>Bhajan Lal (Founder)</strong></p><p>1945 – 2002</p></div></div>
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/5636d31ad1df5cfa2b270748c6531fc8.jpeg" alt="Store"><div class="slider-content"><p><strong>B.L Verdantix Store</strong></p><p>Mawana, Meerut</p></div></div>
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/d62265f2f4b2f3681f6a63c69ff02b14.jpeg" alt="K2"><div class="slider-content"><p><strong>Karan Chaudhary</strong></p><p></p></div></div>
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/2d32eae1bb2753c94f434ddad97f5272.jpeg" alt="A2"><div class="slider-content"><p><strong>Aman Gupt</strong></p><p></p></div></div>
+        <div class="slider-card"><img src="https://img.sanishtech.com/u/6e0bbb8adfef7f873c2babc559def138.jpeg" alt="B2"><div class="slider-content"><p><strong>Bhajan Lal</strong></p><p>1945 – 2002</p></div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="map-section">
+    <div class="map-container">
+      <div class="map-image"><img src="https://img.sanishtech.com/u/5f20542b5dd1734d14209d0cc1ece379.png" alt="India Map"></div>
+      <div class="map-content">
+        <h2>We Are Actively Working In</h2>
+        <ul>
+          <li>Uttar Pradesh</li><li>Punjab</li><li>Haryana</li><li>Uttarakhand</li><li>Bihar</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <div id="footer-home"></div>
+</div>
+
+<!-- ============================================================
+     PAGE: ABOUT
+============================================================ -->
+<div class="page" id="page-about">
+  <div class="about-hero">
+    <h1>Transforming Agriculture<br>for a Sustainable Future</h1>
+    <p>We empower farmers with innovative technology, smart advisory services, and sustainable solutions.</p>
+  </div>
+
+  <section class="mission-section">
+    <div class="mission-grid">
+      <div class="mission-text">
+        <h2>Our Mission</h2>
+        <p>At B.L Verdantix Agri Technologies, we are dedicated to revolutionizing agriculture through innovation, technology, and sustainability.</p>
+        <p>We work closely with farmers to provide smart advisory services, crop protection solutions, and data-driven insights that improve productivity while protecting our planet's natural resources.</p>
+        <p>Our commitment is to create a sustainable agricultural ecosystem that benefits farmers, consumers, and the environment for generations to come.</p>
+      </div>
+      <div class="mission-image"><img src="https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=800" alt="Mission"></div>
+    </div>
+  </section>
+
+  <section class="values-section">
+    <div class="values-container">
+      <h2>Our Core Values</h2>
+      <p class="values-subtitle">The principles that guide everything we do</p>
+      <div class="values-grid">
+        <div class="value-card"><div class="value-icon">🌱</div><h3>Sustainability</h3><p>We prioritize environmental protection and sustainable farming practices in all our solutions.</p></div>
+        <div class="value-card"><div class="value-icon">💡</div><h3>Innovation</h3><p>We continuously develop cutting-edge technologies to solve modern agricultural challenges.</p></div>
+        <div class="value-card"><div class="value-icon">🤝</div><h3>Partnership</h3><p>We believe in building strong relationships with farmers and stakeholders across the agricultural value chain.</p></div>
+        <div class="value-card"><div class="value-icon">📊</div><h3>Data-Driven</h3><p>We leverage data analytics and AI to provide actionable insights for better farming decisions.</p></div>
+        <div class="value-card"><div class="value-icon">🌍</div><h3>Global Impact</h3><p>We aim to create positive change in agricultural communities worldwide.</p></div>
+        <div class="value-card"><div class="value-icon">✅</div><h3>Quality</h3><p>We maintain the highest standards in all our products, services, and customer interactions.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="journey-section">
+    <div class="journey-container">
+      <h2>Our Journey</h2>
+      <div class="timeline">
+        <div class="timeline-item">
+          <div class="timeline-year">2000</div>
+          <div class="timeline-content"><h3>The Idea</h3><p>Idea by Mr. Bhajan Lal with a vision to transform agricultural practices and empower farmers.</p></div>
+          <div class="timeline-dot"></div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-year">2024</div>
+          <div class="timeline-content"><h3>Legacy Continues</h3><p>The company evolved under new leadership, maintaining the founder's vision while embracing modern technology.</p></div>
+          <div class="timeline-dot"></div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-year">2025</div>
+          <div class="timeline-content"><h3>Digital Transformation</h3><p>Launched AI-powered crop advisory services and mobile applications to reach farmers directly.</p></div>
+          <div class="timeline-dot"></div>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-year">2026</div>
+          <div class="timeline-content"><h3>Expanding Horizons</h3><p>Scaling operations nationwide with innovative sustainable agriculture solutions and smart farming technologies.</p></div>
+          <div class="timeline-dot"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="leadership">
+    <h2>Our Leadership</h2>
+    <p class="leadership-intro">Meet the visionary leaders driving innovation and sustainability in agriculture</p>
+    <div class="leaders">
+      <div class="leader-card"><div class="leader-img" style="background-image:url('https://img.sanishtech.com/u/e0a761d95fa1d8675f7606d45e574b54.jpeg')"></div><div class="leader-name">Mr Bhajan Lal</div><div class="leader-title">FOUNDER · 1945–2000</div></div>
+      <div class="leader-card"><div class="leader-img" style="background-image:url('https://img.sanishtech.com/u/080345d2a93af06cbdb2e44cd17764d6.jpg')"></div><div class="leader-name">Mr Karan Kumar</div><div class="leader-title">CEO · B.Tech, Agra</div></div>
+      <div class="leader-card"><div class="leader-img" style="background-image:url('https://img.sanishtech.com/u/85ee08565303f260b9085407e5e34785.jpeg')"></div><div class="leader-name">Mr Aman Gupt</div><div class="leader-title">B.Tech(C.S), Maharajganj</div></div>
+      <div class="leader-card"><div class="leader-img" style="background-image:url('https://img.sanishtech.com/u/c897353ae7ea746fee1b4ffecd65549e.jpeg')"></div><div class="leader-name">Mr Prashant Kumar</div><div class="leader-title">B.Tech(A.G), Bijnor</div></div>
+    </div>
+  </section>
+
+  <section class="team">
+    <h2>Our Team</h2>
+    <p class="team-intro">Dedicated professionals committed to transforming agriculture</p>
+    <div class="team-grid">
+      <div class="team-member"><div class="team-cube" style="background-image:url('https://img.sanishtech.com/u/cfba41ca960e20a89950de71b1f02804.jpeg')"></div><div class="team-name">Mr Harshit Chaudhary</div><div class="team-role">B.Tech(A.G), Bijnor (U.P)</div></div>
+      <div class="team-member"><div class="team-cube" style="background-image:url('https://img.sanishtech.com/u/2de19e8d6564fb975dbb67055a00e1bd.jpeg')"></div><div class="team-name">Mr Nishant Chauhan</div><div class="team-role">B.Tech(A.G), Itabha (U.P)</div></div>
+    </div>
+  </section>
+
+  <div id="footer-about"></div>
+</div>
+
+<!-- ============================================================
+     PAGE: CONTACT
+============================================================ -->
+<div class="page" id="page-contact">
+  <div class="contact-bg">
+    <div class="contact-header">
+      <h1>🌾 Get In Touch</h1>
+      <p class="tagline">Connect with us for Agriculture, Calculators & Scan Photo Solutions</p>
+    </div>
+    <div class="contact-main">
+      <div class="info-section">
+        <h2 class="section-title">Contact Information</h2>
+        <div class="contact-item"><div class="contact-icon">📧</div><div class="contact-details"><h3>Email Address</h3><p><a href="mailto:b.l.verdantix2026@gmail.com">b.l.verdantix2026@gmail.com</a></p></div></div>
+        <div class="contact-item"><div class="contact-icon">📱</div><div class="contact-details"><h3>Phone Number</h3><p><a href="tel:+919058545076">+91 90585 45076</a></p></div></div>
+        <div class="contact-item"><div class="contact-icon">📍</div><div class="contact-details"><h3>Location</h3><p>Meerut, Uttar Pradesh, India</p></div></div>
+        <div class="contact-item"><div class="contact-icon">⏰</div><div class="contact-details"><h3>Business Hours</h3><p>Mon–Sat: 9:00 AM – 6:00 PM<br>Sunday: Closed</p></div></div>
+        <div class="info-box"><h3>Why Choose Us?</h3><p>✓ Expert consulting in agriculture</p><p>✓ Scan-Photo solutions for sustainable farming</p><p>✓ Data-driven analytics and insights</p><p>✓ Dedicated support team</p></div>
+      </div>
+      <div class="form-section">
+        <h2 class="section-title">Send Us a Message</h2>
+        <div class="success-message" id="contactSuccess">✅ Thank you! We'll respond within 24 hours.</div>
+        <div class="error-message" id="contactError">❌ Something went wrong. Please try again.</div>
+        <div class="form-group"><label for="cName">Your Name <span class="required">*</span></label><input type="text" id="cName" placeholder="Enter your full name" required></div>
+        <div class="form-group"><label for="cEmail">Your Email <span class="required">*</span></label><input type="email" id="cEmail" placeholder="your.email@example.com" required></div>
+        <div class="form-group"><label for="cMsg">Your Message <span class="required">*</span></label><textarea id="cMsg" placeholder="Tell us how we can help..." required style="resize:vertical;min-height:140px;width:100%;padding:14px 16px;border:2px solid #d8f3dc;border-radius:10px;font-size:15px;font-family:inherit;background:#f1faee;outline:none;"></textarea></div>
+        <button class="contact-submit" id="contactSubmitBtn" onclick="submitContact()">Send Message 📤</button>
+      </div>
+    </div>
+  </div>
+  <div id="footer-contact"></div>
+</div>
+
+<!-- ============================================================
+     PAGE: SERVICES
+============================================================ -->
+<div class="page" id="page-services">
+  <div class="services-bg">
+    <header class="services-header">
+      <div class="header-inner">
+        <div class="logo-brand">
+          <div class="brand-text"><div class="company-tag">B.L. <span>VERDANTIX</span></div><div class="company-sub">Agri Technologies</div></div>
+        </div>
+        <div class="header-center">
+          <div class="services-badge">⭐ हमारी सेवाएँ</div>
+          <h1>🌾 <span>Our Services</span></h1>
+          <p>GPS Technology और Smart Calculators के साथ खेती को आसान बनाएँ</p>
+        </div>
+      </div>
+    </header>
+
+    <nav class="service-nav">
+      <button class="service-tab active" onclick="switchService('gps')" id="tab-gps"><span>🗺️</span> भूमि क्षेत्रफल कैलकुलेटर</button>
+      <button class="service-tab" onclick="switchService('agri')" id="tab-agri"><span>🌱</span> कृषि कैलकुलेटर</button>
+    </nav>
+
+    <div class="service-panel active" id="panel-gps">
+      <div class="gps-layout">
+        <aside class="gps-sidebar">
+          <div class="sidebar-instructions">
+            <h4>📋 कैसे उपयोग करें:</h4>
+            <ol><li>स्थान खोजें या GPS से खोजें</li><li>"जमीन मापना शुरू करें" दबाएँ</li><li>Map पर सीमा पर क्लिक करें</li><li>सभी कोनों को मार्क करें</li><li>पहले बिंदु पर क्लिक करके बंद करें</li></ol>
+          </div>
+          <div class="gps-input-row"><label>📍 स्थान खोजें</label><input type="text" id="searchLocation" placeholder="मेरठ, उत्तर प्रदेश" onkeypress="if(event.key==='Enter')searchLocation()"></div>
+          <div class="gps-btn-row">
+            <button class="gps-btn primary" onclick="searchLocation()">🔍 स्थान खोजें</button>
+            <button class="gps-btn success" onclick="getCurrentLocation()">📍 अपनी लोकेशन खोजें</button>
+            <div class="loading-text" id="gpsLoading">⏳ लोड हो रहा है...</div>
+            <button class="gps-btn warning" onclick="startDrawing()">✏️ जमीन मापना शुरू करें</button>
+            <button class="gps-btn danger" onclick="clearAll()">🗑️ सब मिटाएँ</button>
+          </div>
+          <div class="gps-result-card" id="resultCard">
+            <div class="r-row"><span class="r-label">क्षेत्रफल (वर्ग मीटर)</span><span class="r-val" id="areaSqM">0</span></div>
+            <div class="r-row"><span class="r-label">क्षेत्रफल (एकड़)</span><span class="r-val" id="areaAcre">0</span></div>
+            <div class="r-row"><span class="r-label">क्षेत्रफल (हेक्टेयर)</span><span class="r-val" id="areaHectare">0</span></div>
+            <div class="r-row"><span class="r-label">क्षेत्रफल (बीघा)</span><span class="r-val" id="areaBigha">0</span></div>
+            <div class="r-row"><span class="r-label">परिधि (मीटर)</span><span class="r-val" id="perimeter">0</span></div>
+          </div>
+          <div class="polygon-hint" id="polygonInfo">📌 जमीन की सीमाओं पर क्लिक करते रहें। पहले बिंदु पर क्लिक करके बंद करें।</div>
+        </aside>
+        <div class="gps-map-wrap"><div id="map"></div></div>
+      </div>
+    </div>
+
+    <div class="service-panel" id="panel-agri">
+      <div class="agri-inner-tabs">
+        <button class="agri-tab-btn active" onclick="openAgriTab('fertilizer',this)">🌱 Fertilizer</button>
+        <button class="agri-tab-btn" onclick="openAgriTab('irrigation',this)">💧 Irrigation</button>
+        <button class="agri-tab-btn" onclick="openAgriTab('bulk-density',this)">📊 Bulk Density</button>
+        <button class="agri-tab-btn" onclick="openAgriTab('tree-dose',this)">🌳 Tree Dose</button>
+        <button class="agri-tab-btn" onclick="openAgriTab('area',this)">📏 Area Converter</button>
+      </div>
+      <div id="fertilizer" class="agri-tab-content active">
+        <h2 class="calc-title">🌾 Fertilizer Calculator</h2>
+        <div class="form-row"><div class="agri-form-group"><label>Select State *</label><select id="state" onchange="loadDistricts()"><option value="">-- Choose State --</option></select></div><div class="agri-form-group"><label>Select District *</label><select id="district"><option value="">-- Choose District --</option></select></div></div>
+        <div class="form-row"><div class="agri-form-group"><label>Select Crop *</label><select id="crop"><option value="">-- Choose Crop --</option></select></div><div class="agri-form-group"><label>Soil Type *</label><select id="soil"><option value="">-- Choose Soil --</option></select></div></div>
+        <div class="form-row"><div class="agri-form-group"><label>Area – Acres</label><input type="number" id="acres" placeholder="0" step="0.01" oninput="convertArea('acres')"></div><div class="agri-form-group"><label>Area – Hectares</label><input type="number" id="hectares" placeholder="0" step="0.01" oninput="convertArea('hectares')"></div><div class="agri-form-group"><label>Area – Bigha</label><input type="number" id="bigha" placeholder="0" step="0.01" oninput="convertArea('bigha')"></div></div>
+        <button class="btn-calc" onclick="calculateFertilizer()">Calculate Fertilizer</button>
+        <div id="fertilizerResult" class="result-box"></div>
+      </div>
+      <div id="irrigation" class="agri-tab-content">
+        <h2 class="calc-title">💧 Irrigation Calculator</h2>
+        <div class="form-row"><div class="agri-form-group"><label>Select Crop *</label><select id="irrigCrop"><option value="">-- Choose --</option><option value="wheat">Wheat</option><option value="rice">Rice</option><option value="cotton">Cotton</option><option value="sugarcane">Sugarcane</option><option value="maize">Maize</option><option value="vegetables">Vegetables</option></select></div><div class="agri-form-group"><label>Irrigation Method *</label><select id="irrigMethod"><option value="">-- Choose --</option><option value="drip">Drip</option><option value="sprinkler">Sprinkler</option><option value="flood">Flood</option><option value="furrow">Furrow</option></select></div></div>
+        <div class="form-row"><div class="agri-form-group"><label>Field Area (Acres) *</label><input type="number" id="irrigArea" placeholder="Enter area" step="0.1"></div><div class="agri-form-group"><label>Soil Type *</label><select id="soilType"><option value="sandy">Sandy</option><option value="loamy">Loamy</option><option value="clay">Clay</option></select></div></div>
+        <button class="btn-calc" onclick="calculateIrrigation()">Calculate Irrigation</button>
+        <div id="irrigationResult" class="result-box"></div>
+      </div>
+      <div id="bulk-density" class="agri-tab-content">
+        <h2 class="calc-title">📊 Bulk Density Calculator</h2>
+        <div class="form-row"><div class="agri-form-group"><label>Soil Weight (g) *</label><input type="number" id="soilWeight" placeholder="Enter weight" step="0.01"></div><div class="agri-form-group"><label>Soil Volume (cm³) *</label><input type="number" id="soilVolume" placeholder="Enter volume" step="0.01"></div></div>
+        <div class="info-note"><strong>Note:</strong> Bulk Density = Weight ÷ Volume (g/cm³)</div>
+        <button class="btn-calc" style="margin-top:18px" onclick="calculateBulkDensity()">Calculate</button>
+        <div id="bulkDensityResult" class="result-box"></div>
+      </div>
+      <div id="tree-dose" class="agri-tab-content">
+        <h2 class="calc-title">🌳 Tree Fertilizer Dose</h2>
+        <div class="agri-form-group"><label>Select Tree Type *</label><div class="tree-grid" id="treeGrid"></div></div>
+        <div class="form-row"><div class="agri-form-group"><label>Tree Age (Days) *</label><input type="number" id="treeAge" placeholder="Enter age"></div><div class="agri-form-group"><label>Number of Trees</label><input type="number" id="treeCount" placeholder="1" value="1"></div></div>
+        <button class="btn-calc" onclick="calculateTreeDose()">Calculate Tree Dose</button>
+        <div id="treeDoseResult" class="result-box"></div>
+      </div>
+      <div id="area" class="agri-tab-content">
+        <h2 class="calc-title">📏 Area Converter</h2>
+        <div class="form-row"><div class="agri-form-group"><label>Enter Value *</label><input type="number" id="areaValue" placeholder="Enter value" step="0.0001" oninput="convertAllAreas()"></div><div class="agri-form-group"><label>From Unit *</label><select id="fromUnit" onchange="convertAllAreas()"><option value="acre">Acre</option><option value="hectare">Hectare</option><option value="bigha">Bigha</option><option value="sqmeter">Sq. Meter</option><option value="sqfoot">Sq. Feet</option><option value="katha">Katha</option><option value="guntha">Guntha</option><option value="biswa">Biswa</option></select></div></div>
+        <div id="areaResult" class="result-box"></div>
+      </div>
+    </div>
+
+  </div>
+  <div id="footer-services"></div>
+</div>
+
+<!-- ============================================================
+     PAGE: PRESS
+============================================================ -->
+<div class="page" id="page-press">
+  <div class="press-bg">
+    <section class="press-hero">
+      <h1>B.L. Verdantix Press Center</h1>
+      <p>Stay up to date with the latest press releases and media coverage about B.L. Verdantix</p>
+    </section>
+    <div class="press-container">
+      <div class="press-grid" id="pressGrid"></div>
+    </div>
+  </div>
+  <div id="footer-press"></div>
+</div>
+
+<!-- ============================================================
+     PAGE: PROFILE
+============================================================ -->
+<div class="page" id="page-profile">
+  <div class="profile-bg">
+    <div class="glow-orb orb1"></div>
+    <div class="glow-orb orb2"></div>
+    <div class="glow-orb orb3"></div>
+    <div class="profile-wrapper">
+      <div class="top-label">
+        <div class="line"></div>
+        <span id="topLabel">Profile Setup</span>
+        <div class="line" style="background:linear-gradient(90deg,transparent,var(--cyan));transform:scaleX(-1)"></div>
+      </div>
+      <div class="profile-card">
+        <div class="success-screen" id="successScreen">
+          <div class="success-ring">
+            <svg viewBox="0 0 24 24" fill="none" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <defs><linearGradient id="cg" x1="0" y1="0" x2="1" y2="1"><stop offset="0%" stop-color="#00d4ff"/><stop offset="100%" stop-color="#00f5c3"/></linearGradient></defs>
+              <polyline points="20 6 9 17 4 12" stroke="url(#cg)"/>
+            </svg>
+          </div>
+          <h2 id="s_title">Profile <em>Submitted!</em></h2>
+          <p id="s_desc">Your data has been sent to the admin. You'll receive a confirmation shortly.</p>
+          <div class="profile-preview" id="previewBox"><img src="" id="previewPic" class="preview-pic" alt=""/><div class="preview-info"><strong id="previewName"></strong><span id="previewEmail"></span></div></div>
+          <button class="btn-new" onclick="resetProfileForm()" id="s_btn">+ New Profile | नई प्रोफाइल</button>
+        </div>
+        <div id="profileFormArea">
+          <div class="card-head">
+            <div class="head-text"><h1 id="h_title">Create Your <em>Profile</em></h1><p id="h_sub">Fill in your details • नीचे जानकारी भरें</p></div>
+            <div class="lang-pill"><button class="active" id="btnEn" onclick="setLang('en')">EN</button><button id="btnHi" onclick="setLang('hi')">हिं</button></div>
+          </div>
+          <div class="avatar-row">
+            <div class="avatar-ring" onclick="document.getElementById('photoInput').click()">
+              <div class="avatar-inner"><div class="avatar-placeholder" id="avatarPlaceholder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><span>PHOTO</span></div><img id="avatarImg" src="" style="display:none" alt="preview"/></div>
+            </div>
+            <div class="avatar-info"><h3 id="a_title">Your Photo</h3><p id="a_sub">JPG, PNG • Max 5MB</p><div class="upload-chip" onclick="document.getElementById('photoInput').click()"><svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span id="a_btn">Upload Photo</span></div></div>
+            <input type="file" id="photoInput" accept="image/*" onchange="previewPhoto(event)"/>
+          </div>
+          <div class="profile-form-body">
+            <div class="sec-title"><span id="sec1">Basic Info</span></div>
+            <div class="profile-field"><label><span class="dot"></span><span id="lbl_name">Full Name</span></label><input type="text" id="inp_name" placeholder="Enter your full name | पूरा नाम" required/></div>
+            <div class="prow2"><div class="profile-field"><label><span class="dot"></span><span id="lbl_age">Age</span></label><input type="number" id="inp_age" placeholder="25" min="1" max="120"/></div><div class="profile-field"><label><span class="dot"></span><span id="lbl_phone">Phone</span></label><input type="tel" id="inp_phone" placeholder="+91 98765 43210"/></div></div>
+            <div class="sec-title" style="margin-top:8px"><span id="sec2">Contact Info</span></div>
+            <div class="profile-field"><label><span class="dot"></span><span id="lbl_gmail">Gmail</span></label><input type="email" id="inp_email" placeholder="yourname@gmail.com" required/></div>
+            <div class="profile-field"><label><span class="dot"></span><span id="lbl_address">Address</span></label><textarea id="inp_address" placeholder="Full address | पूरा पता" required></textarea></div>
+            <div class="btn-wrap"><button class="btn-submit" id="submitBtn" onclick="submitProfileForm()"><span class="btn-inner"><div class="spin-anim" id="pSpinner"></div><span id="btnText">Submit Profile | प्रोफाइल जमा करें</span><span id="btnArrow">→</span></span></button></div>
+            <div class="progress-dots"><div class="pdot active" id="pd1"></div><div class="pdot" id="pd2"></div><div class="pdot" id="pd3"></div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI CHATBOT -->
+<button class="ai-chat-button" id="aiChatButton"><span style="font-size:40px">✨</span></button>
+<div class="ai-chat-window" id="aiChatWindow">
+  <div class="ai-chat-header">
+    <h3><span class="ai-header-icon">🤖</span>किसान सहायता AI</h3>
+    <button class="ai-close-btn" id="aiCloseChat">&times;</button>
+  </div>
+  <div class="ai-chat-messages" id="aiChatMessages">
+    <div class="ai-message bot"><div class="ai-message-bubble"><span class="ai-bot-avatar">🌾</span>नमस्ते! 🙏<br>मैं आपकी सहायता के लिए यहाँ हूँ।<br>कृपया अपनी समस्या पूछें।</div></div>
+  </div>
+  <div class="ai-typing-indicator" id="aiTypingIndicator"><div class="ai-message bot"><div class="ai-message-bubble"><span></span><span></span><span></span></div></div></div>
+  <div class="ai-chat-input-area">
+    <input type="text" class="ai-chat-input" id="aiChatInput" placeholder="अपनी समस्या यहाँ लिखें..." autocomplete="off">
+    <button class="ai-send-btn" id="aiSendBtn">➤</button>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet-draw@1.0.4/dist/leaflet.draw.js"></script>
+<script src="https://unpkg.com/@turf/turf@6.5.0/turf.min.js"></script>
+<script>
+/* ─────────────────────────────────────────
+   FOOTER INJECTION
+───────────────────────────────────────── */
+function injectFooters() {
+  const template = document.getElementById('footerTemplate');
+  const slots = ['footer-home','footer-about','footer-contact','footer-services','footer-press'];
+  slots.forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.appendChild(template.content.cloneNode(true));
+    }
+  });
+}
+
+/* ─────────────────────────────────────────
+   NEWSLETTER
+───────────────────────────────────────── */
+function subscribeNewsletter() {
+  const inputs = document.querySelectorAll('#newsletterEmail');
+  inputs.forEach(input => {
+    if (input.value && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input.value)) {
+      showGlobalToast('✅ Subscribed successfully!', 'success');
+      input.value = '';
+    } else {
+      showGlobalToast('Please enter a valid email', 'error');
+    }
+  });
+}
+
+/* ─────────────────────────────────────────
+   NAVIGATION
+───────────────────────────────────────── */
+const pages = ['home','about','contact','services','press','profile'];
+let currentPage = 'home';
+
+function navigateTo(page) {
+  pages.forEach(p => {
+    document.getElementById('page-'+p).classList.toggle('active', p === page);
+  });
+  currentPage = page;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  if (page === 'services' && !mapInitialized) {
+    setTimeout(initMap, 300);
+  }
+  hamburger.classList.remove('active');
+  navMenu.classList.remove('active');
+  document.getElementById('overlay').classList.remove('active');
+}
+
+/* ─────────────────────────────────────────
+   HEADER
+───────────────────────────────────────── */
+const header    = document.getElementById('mainHeader');
+const hamburger = document.getElementById('hamburger');
+const navMenu   = document.getElementById('navMenu');
+const overlay   = document.getElementById('overlay');
+
+window.addEventListener('scroll', () => {
+  header.classList.toggle('scrolled', window.scrollY > 50);
+});
+hamburger.addEventListener('click', () => {
+  hamburger.classList.toggle('active');
+  navMenu.classList.toggle('active');
+  overlay.classList.toggle('active');
+});
+overlay.addEventListener('click', () => {
+  hamburger.classList.remove('active');
+  navMenu.classList.remove('active');
+  overlay.classList.remove('active');
+});
+
+/* ─────────────────────────────────────────
+   PRESS CARDS
+───────────────────────────────────────── */
+const pressArticles = [
+  { url:'https://agriculture.buzz/qa/how-technology-can-improve-efficiency-productivity-and-sustainability-on-farms/', img:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/67f4dd0201cd9ac0487f0e99_Image.webp', logo:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/677eb0239be0785517cadb86_Agriculture-buzz.webp', lang:'En', title:'How Technology Can Improve Efficiency, Productivity, and Sustainability On Farms', date:'April 1, 2025', source:'agriculture.buzz' },
+  { url:'https://www.fertilizerdaily.com/20250317-cropler-launched-ai-based-plantpilot-that-provides-hyperlocal-field-specific-crop-recommendations/', img:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/67e2d35a4cb45ada7e32c835_Image%20(1).webp', logo:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/679a4c5c93f44f3996f9a214_fertilizer-daily.svg', lang:'En', title:'Cropler launched AI-based PlantPilot that provides hyperlocal crop recommendations', date:'March 21, 2025', source:'fertilizerdaily.com' },
+  { url:'https://agronomymagazine.com/qa/6-tips-for-determining-the-optimal-time-to-harvest-crops/', img:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/67d94b9ea1f0ba6cb1a2ad95_Image.webp', logo:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/672a32a4628f213eaa141cee_Group%2033634%20(1).svg', lang:'En', title:'6 Tips for Determining the Optimal Time to Harvest Crops', date:'March 13, 2025', source:'Agronomymagazine' },
+  { url:'https://fineeng.eu/cropler-ai-powered-digital-agronomical-assistant/', img:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/67b448aa6d3d47eaa35ef290_press29.webp', logo:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/67b448add69c4b6a18492f37_fine-engineering-magazine.webp', lang:'En', title:'Cropler – AI-powered digital agronomical assistant', date:'February 5, 2025', source:'fineeng.eu' },
+  { url:'https://www.fertilizerdaily.com/20250129-cropler-provides-farmers-with-a-24-7-ai-powered-digital-agronomist/', img:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/679cc6e48db307583cb27cd6_Image%20(5).webp', logo:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/679a4c5c93f44f3996f9a214_fertilizer-daily.svg', lang:'En', title:'Cropler provides farmers with a 24/7 AI-powered digital agronomist', date:'January 29, 2025', source:'fertilizerdaily.com' },
+  { url:'https://hackernoon.com/meet-cropler-connectech-and-doubleshift-hackernoon-startups-of-the-week', img:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/679a4a42fb5f254edddbfe80_press-21.png', logo:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/679a4aeeb70fcc93026a0a1f_hackernon.webp', lang:'En', title:'Meet Cropler, Connectech & DoubleShift: HackerNoon Startups of the Week', date:'December 30, 2024', source:'Hackernoon.com' },
+  { url:'https://www.freshfruitportal.com/news/2024/05/30/cropler-becomes-a-game-changer-in-agtech/', img:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/67190e24e4cdde5fa5582abd_cropler-press-2.webp', logo:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/67190fba9ab4e753852c009a_logo-portalfruticola.png', lang:'En', title:'Cropler becomes a game-changer in AgTech', date:'May 30, 2024', source:'Portalfruticola' },
+  { url:'https://softwarehouse.au/blog/what-innovative-types-of-ai-are-transforming-agriculture-today/', img:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/679cbd80f4b571bd0fe7bb8a_Image%20(1).webp', logo:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/677eafbc3b3788e2df7743a1_Software-House-White.webp', lang:'En', title:'What Innovative Types of AI Are Transforming Agriculture Today?', date:'January 25, 2025', source:'Softwarehouse.au' },
+  { url:'https://geofem.com/post/soil-moisture-retention-in-different-types-of-soil', img:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/67d29dddac89b1f40a8e8e54_press-30.webp', logo:'https://cdn.prod.website-files.com/66604a97df59732aab43fcc8/67d29e22ac89b1f40a8eca87_geofem.webp', lang:'En', title:'Soil Moisture Retention in Different Types of Soil: Insights from Remote Sensing and AI', date:'February 21, 2025', source:'geofem.com' },
+];
+
+(function buildPress() {
+  const grid = document.getElementById('pressGrid');
+  pressArticles.forEach(a => {
+    grid.innerHTML += `
+      <a href="${a.url}" class="press-card" target="_blank">
+        <div class="press-image-container">
+          <img src="${a.img}" alt="${a.source}" class="press-image" loading="lazy">
+          <div class="language-badge">${a.lang}</div>
+          <img src="${a.logo}" alt="${a.source} logo" class="source-logo">
+        </div>
+        <div class="press-content">
+          <h3 class="press-title">${a.title}</h3>
+          <div class="press-meta"><span>${a.date}</span><span class="press-source">${a.source}</span></div>
+        </div>
+      </a>`;
+  });
+})();
+
+/* ─────────────────────────────────────────
+   CONTACT FORM
+───────────────────────────────────────── */
+async function submitContact() {
+  const name  = document.getElementById('cName').value.trim();
+  const email = document.getElementById('cEmail').value.trim();
+  const msg   = document.getElementById('cMsg').value.trim();
+  const succEl = document.getElementById('contactSuccess');
+  const errEl  = document.getElementById('contactError');
+  const btn    = document.getElementById('contactSubmitBtn');
+  if (!name || !email || !msg) { errEl.textContent='❌ Please fill all fields!'; errEl.classList.add('show'); return; }
+  btn.disabled = true; btn.textContent = 'Sending...';
+  try {
+    const fd = new FormData();
+    fd.append('access_key','73c88023-d817-45a3-89fe-5ddc155e42ac');
+    fd.append('subject','New Contact Message');
+    fd.append('from_name', name);
+    fd.append('Name', name); fd.append('Email', email); fd.append('Message', msg);
+    const res = await fetch('https://api.web3forms.com/submit',{method:'POST',body:fd});
+    const data = await res.json();
+    if (data.success) {
+      succEl.classList.add('show'); errEl.classList.remove('show');
+      document.getElementById('cName').value=''; document.getElementById('cEmail').value=''; document.getElementById('cMsg').value='';
+      setTimeout(()=>succEl.classList.remove('show'),5000);
+    } else throw new Error();
+  } catch { errEl.textContent='❌ Something went wrong. Try again.'; errEl.classList.add('show'); }
+  btn.disabled=false; btn.textContent='Send Message 📤';
+}
+
+/* ─────────────────────────────────────────
+   GPS MAP
+───────────────────────────────────────── */
+let map, drawnItems, drawControl, mapInitialized=false;
+
+function initMap() {
+  if (mapInitialized) return;
+  map = L.map('map').setView([20.5937,78.9629],5);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',{attribution:'Tiles © Esri',maxZoom:19}).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/light_only_labels/{z}/{x}/{y}{r}.png',{maxZoom:19,subdomains:'abcd'}).addTo(map);
+  drawnItems = new L.FeatureGroup(); map.addLayer(drawnItems);
+  map.on(L.Draw.Event.CREATED,e=>{ drawnItems.addLayer(e.layer); calculateGPSArea(e.layer); document.getElementById('polygonInfo').classList.remove('show'); });
+  map.on(L.Draw.Event.EDITED,e=>e.layers.eachLayer(l=>calculateGPSArea(l)));
+  mapInitialized=true;
+}
+
+function getCurrentLocation() {
+  document.getElementById('gpsLoading').classList.add('show');
+  if (!navigator.geolocation){alert('GPS not supported');return;}
+  navigator.geolocation.getCurrentPosition(pos=>{
+    map.setView([pos.coords.latitude,pos.coords.longitude],16);
+    L.marker([pos.coords.latitude,pos.coords.longitude],{icon:L.divIcon({className:'',html:'📍',iconSize:[30,30]})}).addTo(map).bindPopup('आपकी स्थिति').openPopup();
+    document.getElementById('gpsLoading').classList.remove('show');
+  },()=>{alert('Location not found');document.getElementById('gpsLoading').classList.remove('show');},{enableHighAccuracy:true,timeout:10000});
+}
+
+async function searchLocation() {
+  const q=document.getElementById('searchLocation').value;
+  if(!q){alert('कृपया स्थान का नाम डालें');return;}
+  document.getElementById('gpsLoading').classList.add('show');
+  try{
+    const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(q+', India')}&limit=1`);
+    const data=await res.json();
+    if(data&&data.length){const lat=parseFloat(data[0].lat),lon=parseFloat(data[0].lon);map.setView([lat,lon],15);L.marker([lat,lon],{icon:L.divIcon({className:'',html:'📍',iconSize:[30,30]})}).addTo(map).bindPopup(data[0].display_name).openPopup();}
+    else alert('स्थान नहीं मिला');
+  }catch{alert('खोज में समस्या');}
+  document.getElementById('gpsLoading').classList.remove('show');
+}
+
+function startDrawing() {
+  document.getElementById('polygonInfo').classList.add('show');
+  if(drawControl)map.removeControl(drawControl);
+  drawControl=new L.Control.Draw({draw:{polygon:{allowIntersection:false,showArea:true,metric:true,shapeOptions:{color:'#FF6B6B',fillColor:'#4ECDC4',fillOpacity:.4,weight:3}},polyline:false,rectangle:false,circle:false,marker:false,circlemarker:false},edit:{featureGroup:drawnItems,remove:true}});
+  map.addControl(drawControl);new L.Draw.Polygon(map,drawControl.options.draw.polygon).enable();
+}
+
+function calculateGPSArea(layer) {
+  const ll=layer.getLatLngs()[0],coords=ll.map(x=>[x.lng,x.lat]);coords.push(coords[0]);
+  const poly=turf.polygon([coords]),area=turf.area(poly),peri=turf.length(poly,{units:'meters'})*1000;
+  document.getElementById('areaSqM').textContent=area.toFixed(2);
+  document.getElementById('areaAcre').textContent=(area/4046.86).toFixed(4);
+  document.getElementById('areaHectare').textContent=(area/10000).toFixed(4);
+  document.getElementById('areaBigha').textContent=(area/2529.29).toFixed(4);
+  document.getElementById('perimeter').textContent=peri.toFixed(2);
+  document.getElementById('resultCard').classList.add('show');
+  layer.bindPopup(`<strong>क्षेत्रफल:</strong><br>${area.toFixed(2)} वर्ग मीटर<br>${(area/4046.86).toFixed(4)} एकड़`).openPopup();
+}
+
+function clearAll() {
+  drawnItems.clearLayers();
+  document.getElementById('resultCard').classList.remove('show');
+  document.getElementById('polygonInfo').classList.remove('show');
+  if(drawControl)map.removeControl(drawControl);
+}
+
+function switchService(id) {
+  document.querySelectorAll('.service-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.service-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  document.getElementById('tab-'+id).classList.add('active');
+  if(id==='gps'&&!mapInitialized)setTimeout(initMap,300);
+}
+
+function openAgriTab(name,btn) {
+  document.querySelectorAll('.agri-tab-content').forEach(c=>c.classList.remove('active'));
+  document.querySelectorAll('.agri-tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById(name).classList.add('active');
+  btn.classList.add('active');
+}
+
+/* ─────────────────────────────────────────
+   AGRI DATA & CALCULATORS
+───────────────────────────────────────── */
+const agriData = {
+  states:{"Uttar Pradesh":["Meerut","Lucknow","Kanpur","Ghaziabad","Agra","Varanasi","Prayagraj","Bareilly","Moradabad","Aligarh","Gorakhpur","Saharanpur","Noida","Mathura","Bijnor","Muzaffarnagar","Amroha","Bulandshahr"],"Punjab":["Ludhiana","Amritsar","Jalandhar","Patiala","Bathinda","Mohali","Hoshiarpur","Gurdaspur","Ferozepur","Sangrur"],"Haryana":["Faridabad","Gurgaon","Hisar","Rohtak","Panipat","Karnal","Sonipat","Yamunanagar","Ambala","Kurukshetra"],"Maharashtra":["Mumbai","Pune","Nagpur","Nashik","Aurangabad","Solapur","Kolhapur","Ahmednagar","Jalgaon","Satara"],"Bihar":["Patna","Gaya","Bhagalpur","Muzaffarpur","Purnia","Darbhanga","Begusarai","Katihar","Munger","Saharsa"],"Rajasthan":["Jaipur","Jodhpur","Kota","Udaipur","Ajmer","Bikaner","Alwar","Bharatpur","Sikar","Pali"],"Gujarat":["Ahmedabad","Surat","Vadodara","Rajkot","Bhavnagar","Jamnagar","Junagadh","Gandhinagar","Anand","Mehsana"],"Uttarakhand":["Dehradun","Haridwar","Roorkee","Nainital","Haldwani","Rishikesh","Pauri","Almora","Rudrapur","Kashipur"]},
+  crops:{"Wheat":{urea:260,dap:130,npk:50},"Rice":{urea:220,dap:110,npk:60},"Cotton":{urea:325,dap:130,npk:75},"Sugarcane":{urea:435,dap:175,npk:100},"Maize":{urea:260,dap:130,npk:50},"Soybean":{urea:65,dap:175,npk:50},"Potato":{urea:325,dap:175,npk:125},"Tomato":{urea:260,dap:130,npk:100}},
+  soilTypes:{"Loamy":1.0,"Clay":1.15,"Sandy":1.25,"Silt":1.1,"Red Soil":1.2,"Black Soil":0.95,"Alluvial":1.0},
+  prices:{urea:6.5,dap:27,npk:18,pesticide:350},
+  trees:[{name:"Mango",icon:"🥭"},{name:"Apple",icon:"🍎"},{name:"Orange",icon:"🍊"},{name:"Banana",icon:"🍌"},{name:"Guava",icon:"🍐"},{name:"Papaya",icon:"🍈"},{name:"Coconut",icon:"🥥"},{name:"Lemon",icon:"🍋"},{name:"Pomegranate",icon:"🍒"},{name:"Grapes",icon:"🍇"},{name:"Litchi",icon:"🍑"},{name:"Jackfruit",icon:"🥝"},{name:"Neem",icon:"🌿"},{name:"Teak",icon:"🌳"},{name:"Bamboo",icon:"🎋"},{name:"Cashew",icon:"🌰"},{name:"Amla",icon:"🍈"},{name:"Moringa",icon:"🌿"},{name:"Sandalwood",icon:"🌲"},{name:"Eucalyptus",icon:"🌲"}]
+};
+let selectedTree=null;
+
+(function initAgri(){
+  const st=document.getElementById('state');
+  for(let s in agriData.states) st.innerHTML+=`<option value="${s}">${s}</option>`;
+  const cr=document.getElementById('crop');
+  for(let c in agriData.crops) cr.innerHTML+=`<option value="${c}">${c}</option>`;
+  const so=document.getElementById('soil');
+  for(let s in agriData.soilTypes) so.innerHTML+=`<option value="${s}">${s}</option>`;
+  const grid=document.getElementById('treeGrid');
+  agriData.trees.forEach((t,i)=>{
+    grid.innerHTML+=`<div class="tree-card" onclick="selectTree(${i},this)"><div class="t-icon">${t.icon}</div><div class="t-name">${t.name}</div></div>`;
+  });
+})();
+
+function loadDistricts(){
+  const state=document.getElementById('state').value,sel=document.getElementById('district');
+  sel.innerHTML='<option value="">-- Choose District --</option>';
+  if(state&&agriData.states[state])agriData.states[state].forEach(d=>sel.innerHTML+=`<option value="${d}">${d}</option>`);
+}
+function selectTree(i,el){
+  document.querySelectorAll('.tree-card').forEach(c=>c.classList.remove('selected'));
+  el.classList.add('selected'); selectedTree=agriData.trees[i];
+}
+function convertArea(from){
+  const a=parseFloat(document.getElementById('acres').value)||0,h=parseFloat(document.getElementById('hectares').value)||0,b=parseFloat(document.getElementById('bigha').value)||0;
+  if(from==='acres'){document.getElementById('hectares').value=(a*.404686).toFixed(4);document.getElementById('bigha').value=(a*1.613).toFixed(4);}
+  if(from==='hectares'){document.getElementById('acres').value=(h*2.47105).toFixed(4);document.getElementById('bigha').value=(h*3.986).toFixed(4);}
+  if(from==='bigha'){document.getElementById('acres').value=(b*.62).toFixed(4);document.getElementById('hectares').value=(b*.2508).toFixed(4);}
+}
+function calculateFertilizer(){
+  const state=document.getElementById('state').value,district=document.getElementById('district').value,crop=document.getElementById('crop').value,soil=document.getElementById('soil').value,acres=parseFloat(document.getElementById('acres').value)||0;
+  if(!state||!district||!crop||!soil||acres<=0){alert('Please fill all required fields!');return;}
+  const cd=agriData.crops[crop],sa=agriData.soilTypes[soil],p=agriData.prices;
+  const uK=(cd.urea*acres*sa).toFixed(2),dK=(cd.dap*acres*sa).toFixed(2),nK=(cd.npk*acres*sa).toFixed(2),pC=(p.pesticide*acres).toFixed(2);
+  const uC=(uK*p.urea).toFixed(2),dC=(dK*p.dap).toFixed(2),nC=(nK*p.npk).toFixed(2),total=(+uC+ +dC+ +nC+ +pC).toFixed(2);
+  const box=document.getElementById('fertilizerResult');
+  box.innerHTML=`<h3>📋 Fertilizer for ${crop}</h3><div class="result-item"><span class="result-label">Location</span><span class="result-value">${district}, ${state}</span></div><div class="result-item"><span class="result-label">Soil</span><span class="result-value">${soil}</span></div><div class="result-item"><span class="result-label">Field</span><span class="result-value">${acres} Acres</span></div><div class="result-item"><span class="result-label">🌾 Urea</span><span class="result-value">${uK} kg @ ₹${uC}</span></div><div class="result-item"><span class="result-label">💎 DAP</span><span class="result-value">${dK} kg @ ₹${dC}</span></div><div class="result-item"><span class="result-label">🧪 NPK</span><span class="result-value">${nK} kg @ ₹${nC}</span></div><div class="result-item"><span class="result-label">🐛 Pesticide</span><span class="result-value">₹${pC}</span></div><div class="total-cost">💰 Total Cost: ₹${total}</div><div class="info-note"><strong>Note:</strong> Approximate values. Actual requirements may vary based on soil tests.</div>`;
+  box.classList.add('show');
+}
+function calculateIrrigation(){
+  const crop=document.getElementById('irrigCrop').value,method=document.getElementById('irrigMethod').value,area=parseFloat(document.getElementById('irrigArea').value)||0,soilType=document.getElementById('soilType').value;
+  if(!crop||!method||area<=0){alert('Fill all fields!');return;}
+  const iD={wheat:{drip:400,sprinkler:500,flood:800,furrow:750},rice:{drip:1200,sprinkler:1400,flood:1800,furrow:1600},cotton:{drip:600,sprinkler:750,flood:1000,furrow:900},sugarcane:{drip:1500,sprinkler:1800,flood:2500,furrow:2200},maize:{drip:500,sprinkler:600,flood:900,furrow:800},vegetables:{drip:400,sprinkler:500,flood:700,furrow:650}};
+  const sF={sandy:1.2,loamy:1.0,clay:.9},total=(iD[crop][method]*area*sF[soilType]).toFixed(2),freq=method==='drip'?'Daily':method==='sprinkler'?'2-3 days':'7-10 days',eff=method==='drip'?'90-95%':method==='sprinkler'?'75-85%':'40-60%';
+  const box=document.getElementById('irrigationResult');
+  box.innerHTML=`<h3>💧 Irrigation Requirement</h3><div class="result-item"><span class="result-label">Crop</span><span class="result-value">${crop}</span></div><div class="result-item"><span class="result-label">Method</span><span class="result-value">${method}</span></div><div class="result-item"><span class="result-label">Area</span><span class="result-value">${area} Acres</span></div><div class="result-item"><span class="result-label">💦 Water/Season</span><span class="result-value">${total} mm</span></div><div class="result-item"><span class="result-label">⏰ Frequency</span><span class="result-value">${freq}</span></div><div class="result-item"><span class="result-label">⚡ Efficiency</span><span class="result-value">${eff}</span></div>`;
+  box.classList.add('show');
+}
+function calculateBulkDensity(){
+  const w=parseFloat(document.getElementById('soilWeight').value)||0,v=parseFloat(document.getElementById('soilVolume').value)||0;
+  if(w<=0||v<=0){alert('Enter valid values!');return;}
+  const bd=(w/v).toFixed(3);
+  let q='',r='';
+  if(bd<1.0){q='Very Loose (Excellent)';r='Ideal for most crops.';}
+  else if(bd<1.4){q='Loose to Medium (Good)';r='Suitable with good drainage.';}
+  else if(bd<1.6){q='Medium to Compact';r='May need organic matter.';}
+  else{q='Compacted (Poor)';r='Requires deep tillage.';}
+  const box=document.getElementById('bulkDensityResult');
+  box.innerHTML=`<h3>📊 Bulk Density Analysis</h3><div class="result-item"><span class="result-label">Weight</span><span class="result-value">${w} g</span></div><div class="result-item"><span class="result-label">Volume</span><span class="result-value">${v} cm³</span></div><div class="result-item"><span class="result-label">🎯 Bulk Density</span><span class="result-value">${bd} g/cm³</span></div><div class="result-item"><span class="result-label">Quality</span><span class="result-value">${q}</span></div><div class="info-note"><strong>Recommendation:</strong> ${r}</div>`;
+  box.classList.add('show');
+}
+function calculateTreeDose(){
+  if(!selectedTree){alert('Please select a tree!');return;}
+  const age=parseInt(document.getElementById('treeAge').value)||0,cnt=parseInt(document.getElementById('treeCount').value)||1;
+  if(age<=0){alert('Enter valid age!');return;}
+  let stage='',N=0,P=0,K=0,M=0,wR='',cI='';
+  if(age<30){stage='Seedling (0-30d)';N=10;P=15;K=10;M=2;wR='200-300 ml daily';cI='Keep in shade.';}
+  else if(age<180){stage='Early (1-6m)';N=50;P=40;K=30;M=5;wR='2-3L every 2 days';cI='Apply NPK 10:26:26.';}
+  else if(age<365){stage='Vegetative (6-12m)';N=100;P=75;K=75;M=10;wR='5-7L twice weekly';cI='Apply NPK 19:19:19.';}
+  else if(age<730){stage='Juvenile (1-2yr)';N=200;P=150;K=150;M=20;wR='10-15L weekly';cI='Full NPK.';}
+  else if(age<1825){stage='Young Tree (2-5yr)';N=400;P=300;K=300;M=40;wR='20-30L weekly';cI='Full dose + zinc, boron.';}
+  else{stage='Mature (5+yr)';N=600;P=450;K=450;M=60;wR='40-60L weekly';cI='Split application.';}
+  const box=document.getElementById('treeDoseResult');
+  box.innerHTML=`<h3>🌳 ${selectedTree.name} Dose</h3><div class="result-item"><span class="result-label">Stage</span><span class="result-value">${stage}</span></div><div class="result-item"><span class="result-label">Trees</span><span class="result-value">${cnt}</span></div><div class="result-item"><span class="result-label">🌿 Nitrogen</span><span class="result-value">${N*cnt} g</span></div><div class="result-item"><span class="result-label">💎 Phosphorus</span><span class="result-value">${P*cnt} g</span></div><div class="result-item"><span class="result-label">🧪 Potassium</span><span class="result-value">${K*cnt} g</span></div><div class="result-item"><span class="result-label">🍂 Manure</span><span class="result-value">${M*cnt} kg</span></div><div class="result-item"><span class="result-label">💧 Water</span><span class="result-value">${wR}</span></div><div class="info-note"><strong>Care:</strong> ${cI}</div>`;
+  box.classList.add('show');
+}
+function convertAllAreas(){
+  const val=parseFloat(document.getElementById('areaValue').value)||0,from=document.getElementById('fromUnit').value;
+  if(val<=0){document.getElementById('areaResult').classList.remove('show');return;}
+  const toSqM={acre:4046.86,hectare:10000,bigha:1008.38,sqmeter:1,sqfoot:.092903,katha:126.45,guntha:101.17,biswa:50.42};
+  const sqM=val*toSqM[from];
+  const res={'Acre':(sqM/4046.86).toFixed(4),'Hectare':(sqM/10000).toFixed(4),'Bigha':(sqM/1008.38).toFixed(4),'Sq. Meter':sqM.toFixed(2),'Sq. Feet':(sqM/.092903).toFixed(2),'Katha':(sqM/126.45).toFixed(4),'Guntha':(sqM/101.17).toFixed(4),'Biswa':(sqM/50.42).toFixed(4)};
+  let html='<h3>📏 Area Results</h3>';
+  for(let u in res)html+=`<div class="result-item"><span class="result-label">${u}</span><span class="result-value">${res[u]}</span></div>`;
+  const box=document.getElementById('areaResult');
+  box.innerHTML=html; box.classList.add('show');
+}
+
+/* ─────────────────────────────────────────
+   PROFILE FORM
+───────────────────────────────────────── */
+const profileLang = {
+  en:{topLabel:"Profile Setup",h_title:"Create Your <em>Profile</em>",h_sub:"Fill in your details • नीचे जानकारी भरें",a_title:"Your Photo",a_sub:"JPG, PNG • Max 5MB",a_btn:"Upload Photo",sec1:"Basic Info",sec2:"Contact Info",lbl_name:"Full Name",lbl_age:"Age",lbl_phone:"Phone",lbl_gmail:"Gmail",lbl_address:"Address",btnText:"Submit Profile | प्रोफाइल जमा करें",btnArrow:"→",s_title:"Profile <em>Submitted!</em>",s_desc:"Your data has been sent to the admin.",s_btn:"+ New Profile | नई प्रोफाइल"},
+  hi:{topLabel:"प्रोफाइल सेटअप",h_title:"अपनी <em>प्रोफाइल</em> बनाएं",h_sub:"नीचे जानकारी भरें",a_title:"आपकी फ़ोटो",a_sub:"JPG, PNG • 5MB",a_btn:"फ़ोटो अपलोड करें",sec1:"बुनियादी जानकारी",sec2:"संपर्क जानकारी",lbl_name:"पूरा नाम",lbl_age:"उम्र",lbl_phone:"फ़ोन नंबर",lbl_gmail:"जीमेल",lbl_address:"पता",btnText:"प्रोफाइल जमा करें",btnArrow:"✓",s_title:"प्रोफाइल <em>जमा हो गई!</em>",s_desc:"जानकारी एडमिन के पास पहुंच गई।",s_btn:"+ नई प्रोफाइल"}
+};
+let pLang='en', photoB64=null;
+
+function setLang(l){
+  pLang=l; const c=profileLang[l];
+  document.getElementById('topLabel').textContent=c.topLabel;
+  document.getElementById('h_title').innerHTML=c.h_title;
+  document.getElementById('h_sub').textContent=c.h_sub;
+  document.getElementById('a_title').textContent=c.a_title;
+  document.getElementById('a_sub').textContent=c.a_sub;
+  document.getElementById('a_btn').textContent=c.a_btn;
+  document.getElementById('sec1').textContent=c.sec1;
+  document.getElementById('sec2').textContent=c.sec2;
+  document.getElementById('lbl_name').textContent=c.lbl_name;
+  document.getElementById('lbl_age').textContent=c.lbl_age;
+  document.getElementById('lbl_phone').textContent=c.lbl_phone;
+  document.getElementById('lbl_gmail').textContent=c.lbl_gmail;
+  document.getElementById('lbl_address').textContent=c.lbl_address;
+  document.getElementById('btnText').textContent=c.btnText;
+  document.getElementById('btnArrow').textContent=c.btnArrow;
+  document.getElementById('s_title').innerHTML=c.s_title;
+  document.getElementById('s_desc').textContent=c.s_desc;
+  document.getElementById('s_btn').textContent=c.s_btn;
+  document.getElementById('btnEn').classList.toggle('active',l==='en');
+  document.getElementById('btnHi').classList.toggle('active',l==='hi');
+}
+
+function previewPhoto(e){
+  const file=e.target.files[0]; if(!file)return;
+  const reader=new FileReader();
+  reader.onload=ev=>{photoB64=ev.target.result;document.getElementById('avatarImg').src=photoB64;document.getElementById('avatarImg').style.display='block';document.getElementById('avatarPlaceholder').style.display='none';dotP(1);};
+  reader.readAsDataURL(file);
+}
+function dotP(n){['pd1','pd2','pd3'].forEach((id,i)=>document.getElementById(id).classList.toggle('active',i<=n));}
+
+async function submitProfileForm(){
+  const name=document.getElementById('inp_name').value.trim(),age=document.getElementById('inp_age').value.trim(),phone=document.getElementById('inp_phone').value.trim(),email=document.getElementById('inp_email').value.trim(),address=document.getElementById('inp_address').value.trim();
+  if(!name||!age||!phone||!email||!address){showGlobalToast(pLang==='hi'?'सभी जानकारी भरें!':'Fill all fields!','error');return;}
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){showGlobalToast(pLang==='hi'?'सही Gmail डालें!':'Enter valid email!','error');return;}
+  const btn=document.getElementById('submitBtn');
+  btn.disabled=true;document.getElementById('pSpinner').style.display='block';document.getElementById('btnText').textContent=pLang==='hi'?'भेज रहे हैं...':'Sending...';document.getElementById('btnArrow').textContent='';
+  try{
+    const fd=new FormData();
+    fd.append('access_key','73c88023-d817-45a3-89fe-5ddc155e42ac');
+    fd.append('subject',`New Profile: ${name}`);fd.append('from_name','Profile Form');
+    fd.append('Name',name);fd.append('Age',age);fd.append('Phone',phone);fd.append('Email',email);fd.append('Address',address);
+    const res=await fetch('https://api.web3forms.com/submit',{method:'POST',body:fd});
+    const data=await res.json();
+    if(data.success){
+      document.getElementById('previewName').textContent=name;document.getElementById('previewEmail').textContent=email;
+      if(photoB64)document.getElementById('previewPic').src=photoB64;
+      else document.getElementById('previewBox').style.display='none';
+      document.getElementById('profileFormArea').style.display='none';document.getElementById('successScreen').classList.add('show');dotP(2);
+    }else throw new Error();
+  }catch{showGlobalToast(pLang==='hi'?'कुछ गड़बड़। दोबारा कोशिश करें।':'Something went wrong.','error');btn.disabled=false;document.getElementById('pSpinner').style.display='none';document.getElementById('btnText').textContent=profileLang[pLang].btnText;document.getElementById('btnArrow').textContent=profileLang[pLang].btnArrow;}
+}
+function resetProfileForm(){
+  ['inp_name','inp_age','inp_phone','inp_email','inp_address'].forEach(id=>document.getElementById(id).value='');
+  photoB64=null;document.getElementById('avatarImg').style.display='none';document.getElementById('avatarPlaceholder').style.display='flex';document.getElementById('photoInput').value='';
+  document.getElementById('previewBox').style.display='flex';document.getElementById('profileFormArea').style.display='block';document.getElementById('successScreen').classList.remove('show');
+  const btn=document.getElementById('submitBtn');btn.disabled=false;document.getElementById('pSpinner').style.display='none';document.getElementById('btnText').textContent=profileLang[pLang].btnText;document.getElementById('btnArrow').textContent=profileLang[pLang].btnArrow;dotP(0);
+}
+
+/* ─────────────────────────────────────────
+   AI CHATBOT
+───────────────────────────────────────── */
+const AI_RESPONSE=`<div class="ai-contact-info"><strong>📞 संपर्क करें:</strong><strong>फोन:</strong> 9058545076<br><strong>📧 ईमेल:</strong> b.l.verdantix2026@gmail.com<br><br>हमारी टीम जल्द ही आपकी सहायता करेगी! 🌱</div>`;
+
+document.getElementById('aiChatButton').addEventListener('click',()=>{
+  const win=document.getElementById('aiChatWindow');
+  win.classList.toggle('active');
+  if(win.classList.contains('active'))document.getElementById('aiChatInput').focus();
+});
+document.getElementById('aiCloseChat').addEventListener('click',()=>document.getElementById('aiChatWindow').classList.remove('active'));
+
+function sendAIMessage(){
+  const msg=document.getElementById('aiChatInput').value.trim(); if(!msg)return;
+  addAIMsg(msg,'user');document.getElementById('aiChatInput').value='';
+  document.getElementById('aiTypingIndicator').style.display='block';scrollBot();
+  setTimeout(()=>{document.getElementById('aiTypingIndicator').style.display='none';addAIMsg(AI_RESPONSE,'bot');scrollBot();},1200);
+}
+function addAIMsg(text,sender){
+  const d=document.createElement('div');d.className=`ai-message ${sender}`;
+  const b=document.createElement('div');b.className='ai-message-bubble';b.innerHTML=text;
+  d.appendChild(b);document.getElementById('aiChatMessages').appendChild(d);
+}
+function scrollBot(){const m=document.getElementById('aiChatMessages');m.scrollTop=m.scrollHeight;}
+document.getElementById('aiSendBtn').addEventListener('click',sendAIMessage);
+document.getElementById('aiChatInput').addEventListener('keypress',e=>{if(e.key==='Enter')sendAIMessage();});
+
+/* ─────────────────────────────────────────
+   GLOBAL TOAST
+───────────────────────────────────────── */
+function showGlobalToast(msg,type='success'){
+  const t=document.getElementById('globalToast');
+  t.textContent=(type==='success'?'✅ ':'❌ ')+msg;
+  t.className=`toast-global ${type} show`;
+  setTimeout(()=>t.className='toast-global',4000);
+}
+
+/* ─────────────────────────────────────────
+   INIT
+───────────────────────────────────────── */
+window.addEventListener('DOMContentLoaded', () => {
+  injectFooters();
+});
+</script>
+</body>
+</html>
